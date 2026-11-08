@@ -1,0 +1,13 @@
+@model EventHub.Client.Models.EventStatus
+@{
+    var css = Model switch
+    {
+        EventStatus.Draft => "secondary",
+        EventStatus.Pending => "warning text-dark",
+        EventStatus.Published => "success",
+        EventStatus.Rejected => "danger",
+        EventStatus.Cancelled => "dark",
+        _ => "info"
+    };
+}
+<span class="badge bg-@css">@Model</span>

@@ -1,3 +1,4 @@
+using System.Text;
 using EventHub.Contracts;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -9,12 +10,13 @@ using RabbitMQ.Client.Events;
 namespace EventHub.Messaging;
 
 /// <summary>
-/// Template Method base class for every consumer. The skeleton is fixed:
+/// Template Method base class for every consumer. One queue can carry several message types, so the concrete
+/// type is read from the AMQP 'type' property and resolved through <see cref="MessageRoutes"/>. The skeleton is fixed:
 /// receive -> deserialize -> idempotency check + handle in one transaction -> ack,
 /// and on failure -> retry queue (max N times) -> dead-letter queue.
 /// Subclasses only supply the queue name and <see cref="HandleAsync"/>.
 /// </summary>
-public abstract class BaseConsumer<TMessage> : BackgroundService where TMessage : MessageBase
+public abstract class BaseConsumer : BackgroundService
 {
     private const string RetryHeader = "x-retry-count";
 
@@ -41,7 +43,7 @@ public abstract class BaseConsumer<TMessage> : BackgroundService where TMessage 
     protected virtual string ConsumerName => GetType().Name;
 
     /// <summary>Applies the message to this app's database. Runs inside the idempotency transaction.</summary>
-    protected abstract Task HandleAsync(TMessage message, IServiceProvider services, CancellationToken ct);
+    protected abstract Task HandleAsync(MessageBase message, IServiceProvider services, CancellationToken ct);
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -87,11 +89,13 @@ public abstract class BaseConsumer<TMessage> : BackgroundService where TMessage 
     private async Task OnReceivedAsync(IChannel channel, BasicDeliverEventArgs ea, CancellationToken ct)
     {
         Guid.TryParse(ea.BasicProperties.MessageId, out var propMessageId);
-        var typeName = ea.BasicProperties.Type ?? typeof(TMessage).Name;
+        var typeName = ea.BasicProperties.Type ?? "(unknown)";
 
         try
         {
-            var message = MessageSerializer.Deserialize<TMessage>(ea.Body.Span)
+            var messageType = MessageRoutes.Resolve(typeName)
+                              ?? throw new InvalidDataException($"Unknown message type '{typeName}'.");
+            var message = MessageSerializer.Deserialize(Encoding.UTF8.GetString(ea.Body.Span), messageType) as MessageBase
                           ?? throw new InvalidDataException("Message body deserialized to null.");
 
             using (var scope = _scopes.CreateScope())

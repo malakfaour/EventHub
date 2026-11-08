@@ -1,0 +1,44 @@
+@model List<Event>
+@{
+    ViewData["Title"] = "My events";
+}
+<h1 class="h3 mb-3">My events</h1>
+
+@if (!Model.Any())
+{
+    <p class="text-muted">You have not created any events yet.</p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr><th>Title</th><th>Starts (UTC)</th><th>Status</th><th>Details</th></tr>
+            </thead>
+            <tbody>
+            @foreach (var ev in Model)
+            {
+                <tr>
+                    <td>@ev.Title</td>
+                    <td>@ev.StartsAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td><partial name="_StatusBadge" model="ev.Status" /></td>
+                    <td class="small">
+                        @switch (ev.Status)
+                        {
+                            case EventStatus.Pending:
+                                <span class="text-muted">Waiting for a moderator. It is not public yet.</span>
+                                break;
+                            case EventStatus.Rejected:
+                                <span class="text-danger">Reason: @ev.RejectionReason</span>
+                                break;
+                            case EventStatus.Published:
+                                <span class="text-success">Live on the home page.</span>
+                                break;
+                        }
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}

@@ -1,8 +1,33 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@model List<Event>
+@{
+    ViewData["Title"] = "Discover";
 }
+<div class="p-4 mb-4 bg-light rounded-3">
+    <h1 class="display-6">Discover events</h1>
+    <p class="mb-3 text-muted">Community events, published after a moderator approves them.</p>
+    <a asp-controller="Events" asp-action="Create" class="btn btn-primary">Create an event</a>
+</div>
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<h2 class="h4 mb-3">Upcoming events</h2>
+@if (!Model.Any())
+{
+    <p class="text-muted">No published events yet. New events appear here once a moderator approves them.</p>
+}
+<div class="row row-cols-1 row-cols-md-3 g-3">
+    @foreach (var ev in Model)
+    {
+        <div class="col">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h3 class="h5 card-title">@ev.Title</h3>
+                    <p class="card-text text-muted small mb-2">@ev.StartsAtUtc.ToString("ddd, d MMM yyyy HH:mm") UTC &middot; @ev.Location</p>
+                    <p class="card-text">@(ev.Description.Length > 120 ? ev.Description[..120] + "…" : ev.Description)</p>
+                </div>
+                <div class="card-footer bg-white d-flex justify-content-between">
+                    <span>@(ev.TicketPrice == 0 ? "Free" : ev.TicketPrice.ToString("C"))</span>
+                    <span class="text-muted small">@ev.Capacity seats</span>
+                </div>
+            </div>
+        </div>
+    }
 </div>

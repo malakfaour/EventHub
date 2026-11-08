@@ -1,0 +1,43 @@
+@model List<ModerationItem>
+@{
+    ViewData["Title"] = "Moderation queue";
+    var status = (ModerationStatus)ViewData["Status"]!;
+    var categories = (Dictionary<int, string>)ViewData["Categories"]!;
+}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">Moderation queue</h1>
+    <div class="btn-group">
+        @foreach (var s in Enum.GetValues<ModerationStatus>())
+        {
+            <a asp-action="Index" asp-route-status="@s" class="btn btn-sm @(s == status ? "btn-dark" : "btn-outline-dark")">@s</a>
+        }
+    </div>
+</div>
+
+@if (!Model.Any())
+{
+    <p class="text-muted">Nothing here. Submissions from the Client App appear in this list.</p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr><th>Title</th><th>Category</th><th>Starts (UTC)</th><th>Received (UTC)</th><th>AI risk</th><th></th></tr>
+            </thead>
+            <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.Title</td>
+                    <td>@(categories.TryGetValue(item.CategoryId, out var name) ? name : "#" + item.CategoryId)</td>
+                    <td>@item.StartsAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td>@item.ReceivedAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td>@(item.AiRiskScore?.ToString() ?? "n/a")</td>
+                    <td class="text-end"><a asp-action="Review" asp-route-id="@item.Id" class="btn btn-sm btn-primary">@(status == ModerationStatus.Pending ? "Review" : "View")</a></td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}

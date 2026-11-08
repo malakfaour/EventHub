@@ -18,6 +18,10 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
+    /// <summary>Registers the background service that publishes pending outbox rows.</summary>
+    public static IServiceCollection AddOutboxPublisher(this IServiceCollection services)
+        => services.AddHostedService<OutboxPublisher>();
+
     /// <summary>Registers a consumer as a hosted background service.</summary>
     public static IServiceCollection AddConsumer<TConsumer>(this IServiceCollection services)
         where TConsumer : class, IHostedService
