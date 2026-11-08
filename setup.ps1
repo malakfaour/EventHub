@@ -32,9 +32,9 @@ dotnet add EventHub.Tests  reference EventHub.Contracts EventHub.Messaging
 
 # 6. NuGet packages (latest compatible with your SDK)
 foreach ($p in "EventHub.Client", "EventHub.Admin") {
-    dotnet add $p package Microsoft.EntityFrameworkCore.SqlServer
-    dotnet add $p package Microsoft.EntityFrameworkCore.Design
-    dotnet add $p package Microsoft.AspNetCore.Identity.EntityFrameworkCore
+    dotnet add $p package Microsoft.EntityFrameworkCore.SqlServer --version "$major.*"
+    dotnet add $p package Microsoft.EntityFrameworkCore.Design --version "$major.*"
+    dotnet add $p package Microsoft.AspNetCore.Identity.EntityFrameworkCore --version "$major.*"
     dotnet add $p package Serilog.AspNetCore
 }
 dotnet add EventHub.Tests package Moq
