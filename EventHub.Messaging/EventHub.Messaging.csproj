@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <!-- Gives us Hosting, Options, Logging and DI abstractions without extra packages. -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="RabbitMQ.Client" Version="7.*" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\EventHub.Contracts\EventHub.Contracts.csproj" />
+  </ItemGroup>
+</Project>

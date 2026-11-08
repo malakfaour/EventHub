@@ -1,0 +1,12 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    { "name": "Client App", "type": "dotnet", "request": "launch",
+      "projectPath": "${workspaceFolder}/EventHub.Client/EventHub.Client.csproj" },
+    { "name": "Admin App", "type": "dotnet", "request": "launch",
+      "projectPath": "${workspaceFolder}/EventHub.Admin/EventHub.Admin.csproj" }
+  ],
+  "compounds": [
+    { "name": "Both apps", "configurations": ["Client App", "Admin App"] }
+  ]
+}

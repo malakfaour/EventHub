@@ -1,0 +1,9 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    { "label": "build", "command": "dotnet", "type": "process",
+      "args": ["build", "${workspaceFolder}/EventHub.sln"], "problemMatcher": "$msCompile" },
+    { "label": "infra up", "type": "shell", "command": "docker compose up -d" },
+    { "label": "infra down", "type": "shell", "command": "docker compose down" }
+  ]
+}

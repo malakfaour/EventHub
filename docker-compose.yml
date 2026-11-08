@@ -1,0 +1,33 @@
+# Infrastructure for local development. The two apps are added to this file in Phase 7.
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: eventhub-rabbitmq
+    ports:
+      - "5672:5672"     # AMQP
+      - "15672:15672"   # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-eventhub}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-eventhub_pw}
+    volumes:
+      - rabbitdata:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: eventhub-sql
+    ports:
+      - "1433:1433"
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${SA_PASSWORD:-Your_strong_Pass123}
+    volumes:
+      - sqldata:/var/opt/mssql
+
+volumes:
+  rabbitdata:
+  sqldata:
