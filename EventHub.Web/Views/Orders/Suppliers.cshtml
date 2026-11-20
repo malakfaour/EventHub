@@ -1,0 +1,41 @@
+@model List<EventHub.Web.Models.CatalogSupplier>
+@{
+    var ev = (EventHub.Web.Models.Event)ViewBag.Event;
+    var category = (string)ViewBag.Category;
+    ViewData["Title"] = "Choose a supplier";
+}
+<a class="back-link" asp-controller="Events" asp-action="Details" asp-route-id="@ev.Id"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>@ev.Name</a>
+<div class="page-header">
+    <div>
+        <div class="crumbs">Find a supplier · <b>@ev.Name</b></div>
+        <h1 class="page-title">@SupplyCategories.DisplayName(category) suppliers</h1>
+    </div>
+</div>
+@if (!Model.Any())
+{
+    <div class="panel"><div class="empty-state"><strong>No suppliers yet</strong>No supplier has published a catalog for this category yet.</div></div>
+}
+<div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3">
+@foreach (var s in Model)
+{
+    <div class="col">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="with-tile mb-3">
+                    <span class="tile">@(s.Name.Length > 0 ? s.Name[..1] : "?")</span>
+                    <div><h2 class="h5 mb-0">@s.Name</h2><span class="cell-sub">@SupplyCategories.DisplayName(category)</span></div>
+                </div>
+                <ul class="price-list">
+                    @foreach (var p in s.Products.Where(p => p.IsAvailable).OrderBy(p => p.Name))
+                    {
+                        <li><span>@p.Name</span><span class="text-muted">@p.Price.ToString("N2") / @p.Unit</span></li>
+                    }
+                </ul>
+            </div>
+            <div class="card-footer">
+                <a class="btn btn-primary w-100" asp-action="Create" asp-route-eventId="@ev.Id" asp-route-supplierId="@s.Id">Order from @s.Name</a>
+            </div>
+        </div>
+    </div>
+}
+</div>

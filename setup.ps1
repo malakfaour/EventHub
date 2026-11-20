@@ -17,21 +17,21 @@ if (-not (Test-Path EventHub.sln)) {
 }
 
 # 3. MVC apps and test project (class libraries are already in the repo)
-if (-not (Test-Path EventHub.Client/EventHub.Client.csproj)) { dotnet new mvc   -n EventHub.Client -o EventHub.Client --no-restore }
-if (-not (Test-Path EventHub.Admin/EventHub.Admin.csproj))   { dotnet new mvc   -n EventHub.Admin  -o EventHub.Admin  --no-restore }
+if (-not (Test-Path EventHub.Web/EventHub.Web.csproj)) { dotnet new mvc   -n EventHub.Web -o EventHub.Web --no-restore }
+if (-not (Test-Path SupplierSystem.Web/SupplierSystem.Web.csproj))   { dotnet new mvc   -n SupplierSystem.Web  -o SupplierSystem.Web  --no-restore }
 if (-not (Test-Path EventHub.Tests/EventHub.Tests.csproj))   { dotnet new xunit -n EventHub.Tests  -o EventHub.Tests  --no-restore }
 
 # 4. Add projects to the solution
 dotnet sln EventHub.sln add EventHub.Contracts/EventHub.Contracts.csproj EventHub.Messaging/EventHub.Messaging.csproj `
-    EventHub.Client/EventHub.Client.csproj EventHub.Admin/EventHub.Admin.csproj EventHub.Tests/EventHub.Tests.csproj
+    EventHub.Web/EventHub.Web.csproj SupplierSystem.Web/SupplierSystem.Web.csproj EventHub.Tests/EventHub.Tests.csproj
 
 # 5. Project references
-dotnet add EventHub.Client reference EventHub.Contracts EventHub.Messaging
-dotnet add EventHub.Admin  reference EventHub.Contracts EventHub.Messaging
+dotnet add EventHub.Web reference EventHub.Contracts EventHub.Messaging
+dotnet add SupplierSystem.Web  reference EventHub.Contracts EventHub.Messaging
 dotnet add EventHub.Tests  reference EventHub.Contracts EventHub.Messaging
 
 # 6. NuGet packages (latest compatible with your SDK)
-foreach ($p in "EventHub.Client", "EventHub.Admin") {
+foreach ($p in "EventHub.Web", "SupplierSystem.Web") {
     dotnet add $p package Microsoft.EntityFrameworkCore.SqlServer --version "$major.*"
     dotnet add $p package Microsoft.EntityFrameworkCore.Design --version "$major.*"
     dotnet add $p package Microsoft.AspNetCore.Identity.EntityFrameworkCore --version "$major.*"
@@ -47,8 +47,8 @@ function Set-Ports($proj, $http, $https) {
     if ($json.profiles.https) { $json.profiles.https.applicationUrl = "https://localhost:$https;http://localhost:$http" }
     $json | ConvertTo-Json -Depth 10 | Set-Content $path
 }
-Set-Ports "EventHub.Client" 5001 7001
-Set-Ports "EventHub.Admin"  5002 7002
+Set-Ports "EventHub.Web" 5001 7001
+Set-Ports "SupplierSystem.Web"  5002 7002
 
 # 8. Tools and infrastructure
 dotnet tool update --global dotnet-ef 2>$null

@@ -1,0 +1,48 @@
+@model List<EventHub.Web.Models.SupplyOrder>
+@{
+    ViewData["Title"] = "Supply orders";
+    var active = Model.Count(o => o.IsActive && o.Status != SupplyOrderStatus.Delivered);
+    var delivered = Model.Count(o => o.Status == SupplyOrderStatus.Delivered);
+}
+<div class="page-header">
+    <div>
+        <div class="crumbs">Workspace / <b>Supply orders</b></div>
+        <h1 class="page-title">Supply orders</h1>
+    </div>
+</div>
+
+<div class="stat-grid">
+    <div class="stat-card is-accent"><span class="stat-label">In progress</span><span class="stat-value">@active</span><span class="stat-meta">Waiting on suppliers</span></div>
+    <div class="stat-card"><span class="stat-label">Delivered</span><span class="stat-value">@delivered</span><span class="stat-meta">All time</span></div>
+    <div class="stat-card"><span class="stat-label">Total spent</span><span class="stat-value">@Model.Where(o => o.IsActive).Sum(o => o.Total).ToString("N2")</span><span class="stat-meta">Excluding cancelled and rejected</span></div>
+</div>
+
+<section class="panel">
+    <div class="panel-head"><h2>All orders</h2><span class="panel-note">@Model.Count orders</span></div>
+    @if (!Model.Any())
+    {
+        <div class="empty-state"><strong>No orders yet</strong>Open an event and choose “Find a supplier” next to a need.</div>
+    }
+    else
+    {
+        <div class="table-wrap">
+        <table class="table table-hover">
+            <thead><tr><th>Event</th><th>Supplier</th><th>Category</th><th>Placed</th><th class="num">Total</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+            @foreach (var o in Model)
+            {
+                <tr data-href="@Url.Action("Details", new { id = o.Id })">
+                    <td class="cell-title">@o.Event?.Name</td>
+                    <td>@o.SupplierName</td>
+                    <td>@SupplyCategories.DisplayName(o.Category)</td>
+                    <td class="text-muted">@o.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td class="num fw-semibold">@o.Total.ToString("N2")</td>
+                    <td><partial name="_StatusBadge" model="@o.Status.ToString()" /></td>
+                    <td class="text-end"><a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@o.Id">Open</a></td>
+                </tr>
+            }
+            </tbody>
+        </table>
+        </div>
+    }
+</section>

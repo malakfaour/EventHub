@@ -1,0 +1,51 @@
+@model List<SupplierSystem.Web.Models.Invoice>
+@{
+    ViewData["Title"] = "Invoices";
+    var open = Model.Where(i => i.Status == SupplierSystem.Web.Models.InvoiceStatus.Issued).ToList();
+}
+<div class="page-header">
+    <div>
+        <div class="crumbs">Workspace / <b>Invoices</b></div>
+        <h1 class="page-title">Invoices</h1>
+    </div>
+</div>
+
+<div class="stat-grid">
+    <div class="stat-card is-accent"><span class="stat-label">Awaiting payment</span><span class="stat-value">@open.Count</span><span class="stat-meta">@open.Sum(i => i.Amount).ToString("N2") outstanding</span></div>
+    <div class="stat-card"><span class="stat-label">Overdue</span><span class="stat-value">@open.Count(i => i.IsOverdue)</span><span class="stat-meta">Past the due date</span></div>
+    <div class="stat-card"><span class="stat-label">Paid</span><span class="stat-value">@Model.Count(i => i.Status == SupplierSystem.Web.Models.InvoiceStatus.Paid)</span><span class="stat-meta">@Model.Where(i => i.Status == SupplierSystem.Web.Models.InvoiceStatus.Paid).Sum(i => i.Amount).ToString("N2") received</span></div>
+</div>
+
+<section class="panel">
+    <div class="panel-head"><h2>All invoices</h2><span class="panel-note">Issue an invoice from a delivered order.</span></div>
+    @if (!Model.Any())
+    {
+        <div class="empty-state"><strong>No invoices yet</strong>Open a delivered order and choose “Issue invoice”.</div>
+    }
+    else
+    {
+        <div class="table-wrap">
+        <table class="table table-hover">
+            <thead><tr><th>Invoice</th><th>Event</th><th>Organizer</th><th>Issued</th><th>Due</th><th class="num">Amount</th><th>Status</th></tr></thead>
+            <tbody>
+            @foreach (var i in Model)
+            {
+                <tr data-href="@Url.Action("Details", "Orders", new { id = i.SupplyOrderId })">
+                    <td class="cell-title">@i.Number</td>
+                    <td>@i.Order?.EventName</td>
+                    <td class="text-muted">@i.Order?.Customer?.Name</td>
+                    <td class="text-muted">@i.IssuedAtUtc.ToString("yyyy-MM-dd")</td>
+                    <td class="text-muted">@i.DueAtUtc.ToString("yyyy-MM-dd")</td>
+                    <td class="num fw-semibold">@i.Amount.ToString("N2") @i.Currency</td>
+                    <td>
+                        @if (i.Status == SupplierSystem.Web.Models.InvoiceStatus.Paid) { <span class="status status-green">Paid</span> }
+                        else if (i.IsOverdue) { <span class="status status-red">Overdue</span> }
+                        else { <span class="status status-amber">Awaiting payment</span> }
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+        </div>
+    }
+</section>

@@ -1,0 +1,72 @@
+@model List<SupplierSystem.Web.Models.SupplyOrder>
+@{
+    ViewData["Title"] = "Orders";
+    var current = ViewBag.Status as SupplyOrderStatus?;
+    var waiting = Model.Count(o => o.Status == SupplyOrderStatus.Received);
+    var inProgress = Model.Count(o => o.Status is SupplyOrderStatus.Accepted or SupplyOrderStatus.Preparing or SupplyOrderStatus.Dispatched);
+    var weekEnd = DateTime.UtcNow.AddDays(7);
+    var dueSoon = Model.Where(o => o.Status is SupplyOrderStatus.Accepted or SupplyOrderStatus.Preparing or SupplyOrderStatus.Dispatched
+                                   && o.DeliveryAtUtc >= DateTime.UtcNow && o.DeliveryAtUtc <= weekEnd)
+                       .OrderBy(o => o.DeliveryAtUtc).ToList();
+    string NextStep(SupplyOrderStatus s) => s switch
+    {
+        SupplyOrderStatus.Received => "Accept",
+        SupplyOrderStatus.Accepted => "Start preparing",
+        SupplyOrderStatus.Preparing => "Dispatch",
+        SupplyOrderStatus.Dispatched => "Mark delivered",
+        _ => "View"
+    };
+    bool NeedsAction(SupplyOrderStatus s) => s is SupplyOrderStatus.Received or SupplyOrderStatus.Accepted or SupplyOrderStatus.Preparing or SupplyOrderStatus.Dispatched;
+    var filters = new[] { SupplyOrderStatus.Received, SupplyOrderStatus.Accepted, SupplyOrderStatus.Preparing, SupplyOrderStatus.Dispatched, SupplyOrderStatus.Delivered, SupplyOrderStatus.Rejected, SupplyOrderStatus.Cancelled };
+}
+<div class="page-header">
+    <div>
+        <div class="crumbs">Workspace / <b>Orders</b></div>
+        <h1 class="page-title">Incoming orders</h1>
+    </div>
+</div>
+
+<div class="stat-grid">
+    <div class="stat-card is-accent"><span class="stat-label">Waiting for you</span><span class="stat-value">@waiting</span><span class="stat-meta">Received, not yet accepted</span></div>
+    <div class="stat-card"><span class="stat-label">In progress</span><span class="stat-value">@inProgress</span><span class="stat-meta">Accepted, preparing or dispatched</span></div>
+    <div class="stat-card"><span class="stat-label">Due this week</span><span class="stat-value">@dueSoon.Count</span><span class="stat-meta">@(dueSoon.Any() ? $"Next delivery {dueSoon[0].DeliveryAtUtc:ddd HH:mm}" : "Nothing due")</span></div>
+</div>
+
+<section class="panel">
+    <div class="panel-head">
+        <nav class="filters" aria-label="Filter by status">
+            <a class="filter-pill @(current is null ? "active" : "")" asp-action="Index">All</a>
+            @foreach (var s in filters)
+            {
+                <a class="filter-pill @(current == s ? "active" : "")" asp-action="Index" asp-route-status="@s">@s</a>
+            }
+        </nav>
+    </div>
+    @if (!Model.Any())
+    {
+        <div class="empty-state"><strong>No orders here</strong>Orders appear when an organizer places one in the Event Hub.</div>
+    }
+    else
+    {
+        <div class="table-wrap">
+        <table class="table table-hover">
+            <thead><tr><th>Event</th><th>Organizer</th><th>Supplier</th><th>Received</th><th>Delivery</th><th class="num">Total</th><th>Status</th><th class="text-end">Next step</th></tr></thead>
+            <tbody>
+            @foreach (var o in Model)
+            {
+                <tr data-href="@Url.Action("Details", new { id = o.Id })">
+                    <td class="cell-title">@o.EventName</td>
+                    <td>@o.Customer?.Name</td>
+                    <td>@o.Supplier?.Name</td>
+                    <td class="text-muted">@o.ReceivedAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td>@o.DeliveryAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td class="num fw-semibold">@o.Total.ToString("N2")</td>
+                    <td><partial name="_StatusBadge" model="o.Status" /></td>
+                    <td class="text-end"><a class="btn btn-sm @(NeedsAction(o.Status) ? "btn-primary" : "btn-outline-primary") text-nowrap" asp-action="Details" asp-route-id="@o.Id">@NextStep(o.Status)</a></td>
+                </tr>
+            }
+            </tbody>
+        </table>
+        </div>
+    }
+</section>

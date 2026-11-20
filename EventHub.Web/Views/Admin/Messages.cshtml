@@ -1,0 +1,60 @@
+@model EventHub.Web.ViewModels.MessageMonitorData
+@{
+    ViewData["Title"] = "Message monitor";
+    string? current = ViewBag.Status as string;
+    var statuses = new[] { "Published", "Consumed", "Retried", "Failed", "DeadLettered" };
+    int Count(string s) => Model.ByStatus.TryGetValue(s, out var n) ? n : 0;
+}
+<div class="page-header">
+    <div>
+        <div class="crumbs">Admin / <b>Message monitor</b></div>
+        <h1 class="page-title">Message monitor</h1>
+    </div>
+</div>
+
+<div class="stat-grid">
+    <div class="stat-card is-accent"><span class="stat-label">Waiting in outbox</span><span class="stat-value">@Model.OutboxPending</span><span class="stat-meta">Saved, not yet sent to RabbitMQ</span></div>
+    <div class="stat-card"><span class="stat-label">Outbox retrying</span><span class="stat-value">@Model.OutboxRetrying</span><span class="stat-meta">At least one failed send</span></div>
+    <div class="stat-card"><span class="stat-label">Dead-lettered</span><span class="stat-value">@Count("DeadLettered")</span><span class="stat-meta">Gave up after retries</span></div>
+    <div class="stat-card"><span class="stat-label">Applied once</span><span class="stat-value">@Model.Processed</span><span class="stat-meta">Idempotency records</span></div>
+</div>
+
+<section class="panel">
+    <div class="panel-head">
+        <h2>Message log</h2>
+        <div class="d-flex gap-2 flex-wrap">
+            <a class="btn btn-sm @(current is null ? "btn-primary" : "btn-outline-primary")" asp-action="Messages">All (@Model.TotalLogged)</a>
+            @foreach (var s in statuses)
+            {
+                <a class="btn btn-sm @(current == s ? "btn-primary" : "btn-outline-primary")" asp-action="Messages" asp-route-status="@s">@s (@Count(s))</a>
+            }
+        </div>
+    </div>
+    @if (!Model.Rows.Any())
+    {
+        <div class="empty-state"><strong>No messages</strong>Nothing logged for this filter.</div>
+    }
+    else
+    {
+        <div class="table-wrap">
+        <table class="table table-hover">
+            <thead><tr><th>Time (UTC)</th><th>Type</th><th>Direction</th><th>Status</th><th>Queue</th><th>Correlation</th><th>Error</th></tr></thead>
+            <tbody>
+            @foreach (var m in Model.Rows)
+            {
+                <tr>
+                    <td class="text-muted">@m.TimestampUtc.ToString("MM-dd HH:mm:ss")</td>
+                    <td class="cell-title">@m.Type</td>
+                    <td>@m.Direction</td>
+                    <td><partial name="_StatusBadge" model="@(m.Status is "Failed" or "DeadLettered" ? "Failed" : m.Status is "Retried" ? "Pending" : "Paid")" /> @m.Status</td>
+                    <td class="text-muted">@m.Queue</td>
+                    <td class="text-muted"><code>@(m.CorrelationId?.ToString()[..8])</code></td>
+                    <td class="text-muted">@m.Error</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+        </div>
+        <div class="panel-body panel-note">Showing the latest 200 entries.</div>
+    }
+</section>

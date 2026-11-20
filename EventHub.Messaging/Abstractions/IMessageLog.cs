@@ -8,7 +8,7 @@ public sealed record MessageLogEntry(
     Guid? MessageId, string Type, MessageDirection Direction, MessageStatus Status,
     string? Queue = null, string? Error = null, Guid? CorrelationId = null);
 
-/// <summary>Persists the audit trail shown on the Admin message-log page. Each app can implement it with its own DB.</summary>
+/// <summary>Persists the audit trail shown on the message-log page. Each app can implement it with its own DB.</summary>
 public interface IMessageLog
 {
     Task RecordAsync(MessageLogEntry entry, CancellationToken ct = default);

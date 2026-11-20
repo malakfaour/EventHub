@@ -1,55 +1,52 @@
 namespace EventHub.Contracts;
 
-// ───────────── Client App  ->  Admin App  (exchange: eventhub.client) ─────────────
+// ───────────── Shared parts ─────────────
 
-/// <summary>An organizer submitted a new event for moderation.</summary>
-public sealed record EventSubmitted(
-    Guid EventId, Guid OrganizerId, string Title, string Description,
-    int CategoryId, DateTime StartsAtUtc, string Location,
-    int Capacity, decimal TicketPrice) : MessageBase;
+/// <summary>One line of a supply order.</summary>
+public sealed record OrderLine(Guid ProductId, string Name, string Unit, int Quantity, decimal UnitPrice);
 
-/// <summary>An organizer edited a published event; it must be re-reviewed.</summary>
-public sealed record EventUpdated(
-    Guid EventId, Guid OrganizerId, string Title, string Description,
-    int CategoryId, DateTime StartsAtUtc, string Location,
-    int Capacity, decimal TicketPrice) : MessageBase;
+/// <summary>One product in a supplier's catalog.</summary>
+public sealed record CatalogItem(Guid ProductId, string Name, string Unit, decimal Price, bool IsAvailable);
 
-public sealed record EventCancelled(Guid EventId, Guid OrganizerId, string Reason) : MessageBase;
+// ───────────── Event Hub  ->  Supplier System  (exchange: eventhub.exchange) ─────────────
 
-/// <param name="TargetType">"Event" or "Comment".</param>
-public sealed record EventReported(
-    Guid ReportId, string TargetType, Guid TargetId, Guid ReporterId, string Reason) : MessageBase;
+/// <summary>An organizer ordered supplies for an event from one supplier.</summary>
+public sealed record SupplyOrderPlaced(
+    Guid OrderId, Guid EventId, string EventName,
+    Guid OrganizerId, string OrganizerName, string OrganizerEmail,
+    Guid SupplierId, string Category,
+    DateTime DeliveryAtUtc, string DeliveryAddress, string? Notes,
+    IReadOnlyList<OrderLine> Lines) : MessageBase, ICategorized;
 
-public sealed record RsvpCreated(Guid RsvpId, Guid EventId, Guid UserId, RsvpStatus Status) : MessageBase;
+/// <summary>The organizer cancelled an order before delivery.</summary>
+public sealed record OrderCancelled(
+    Guid OrderId, Guid SupplierId, string Category, string Reason) : MessageBase, ICategorized;
 
-public sealed record RsvpCancelled(Guid RsvpId, Guid EventId, Guid UserId) : MessageBase;
-
-/// <param name="Rating">Optional 1-5 star rating.</param>
-public sealed record CommentPosted(
-    Guid CommentId, Guid EventId, Guid UserId, string Text, int? Rating) : MessageBase;
-
-public sealed record UserRegistered(Guid UserId, string Email, string DisplayName) : MessageBase;
-
-/// <summary>Client -> Admin. Carries everything the revenue reports need.</summary>
+/// <summary>The organizer paid an invoice.</summary>
 public sealed record PaymentCompleted(
-    Guid PaymentId, Guid UserId, Guid? EventId, PaymentKind Kind,
+    Guid PaymentId, Guid OrderId, Guid InvoiceId, Guid SupplierId,
     decimal Amount, string Currency, string ProviderReference) : MessageBase;
 
-// ───────────── Admin App  ->  Client App  (exchange: eventhub.admin) ─────────────
+// ───────────── Supplier System  ->  Event Hub  (exchange: supplier.exchange) ─────────────
 
-public sealed record EventApproved(
-    Guid EventId, Guid ModeratorId, DateTime ApprovedAtUtc, bool IsFeatured) : MessageBase;
+/// <summary>The supplier moved an order forward: Accepted, Preparing, Dispatched or Delivered.</summary>
+public sealed record OrderStatusChanged(
+    Guid OrderId, Guid SupplierId, SupplyOrderStatus Status, string? Note) : MessageBase;
 
-public sealed record EventRejected(
-    Guid EventId, Guid ModeratorId, string ReasonCode, string ReasonText) : MessageBase;
+/// <summary>The supplier cannot fulfil the order.</summary>
+public sealed record OrderRejected(
+    Guid OrderId, Guid SupplierId, string ReasonCode, string ReasonText) : MessageBase;
 
-public sealed record ReportResolved(
-    Guid ReportId, string TargetType, Guid TargetId, Guid ReporterId,
-    string Resolution, bool ContentRemoved) : MessageBase;
+/// <summary>Invoice sent after delivery.</summary>
+public sealed record InvoiceIssued(
+    Guid InvoiceId, Guid OrderId, Guid SupplierId, decimal Amount, string Currency,
+    DateTime IssuedAtUtc, DateTime DueAtUtc) : MessageBase;
 
-/// <param name="ExpiresAtUtc">Null means a permanent ban.</param>
-public sealed record UserBanned(Guid UserId, string Reason, DateTime? ExpiresAtUtc) : MessageBase;
+/// <summary>Full snapshot of one supplier's catalog. The Event Hub replaces its local copy with it.</summary>
+public sealed record CatalogPublished(
+    Guid SupplierId, string SupplierName, string Category,
+    IReadOnlyList<CatalogItem> Items) : MessageBase;
 
-public sealed record UserUnbanned(Guid UserId) : MessageBase;
-
-public sealed record CategoryChanged(int CategoryId, string Name, bool IsActive) : MessageBase;
+/// <summary>One item went out of stock or came back.</summary>
+public sealed record ItemAvailabilityChanged(
+    Guid SupplierId, Guid ProductId, bool IsAvailable) : MessageBase;

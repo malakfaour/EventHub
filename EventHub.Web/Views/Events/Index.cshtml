@@ -1,0 +1,54 @@
+@model List<EventHub.Web.Models.Event>
+@{
+    ViewData["Title"] = "My events";
+    var now = DateTime.UtcNow;
+    var upcoming = Model.Where(e => e.IsOpen && e.StartsAtUtc > now).OrderBy(e => e.StartsAtUtc).ToList();
+    var next = upcoming.FirstOrDefault();
+    var drafts = Model.Count(e => e.Status == EventHub.Web.Models.EventStatus.Draft);
+}
+<div class="page-header">
+    <div>
+        <div class="crumbs">Workspace / <b>My events</b></div>
+        <h1 class="page-title">My events</h1>
+    </div>
+    <div class="page-actions">
+        <a class="btn btn-primary" asp-action="Create"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>New event</a>
+    </div>
+</div>
+
+<div class="stat-grid">
+    <div class="stat-card"><span class="stat-label">Upcoming events</span><span class="stat-value">@upcoming.Count</span><span class="stat-meta">@(next is null ? "Nothing scheduled" : $"Next: {next.Name} · {next.StartsAtUtc:d MMM}")</span></div>
+    <div class="stat-card"><span class="stat-label">Drafts</span><span class="stat-value">@drafts</span><span class="stat-meta">Not yet marked as planned</span></div>
+    <div class="stat-card"><span class="stat-label">Needs listed</span><span class="stat-value">@upcoming.Sum(e => e.Requirements.Count)</span><span class="stat-meta">Across upcoming events</span></div>
+    <div class="stat-card is-accent"><span class="stat-label">Guests expected</span><span class="stat-value">@upcoming.Sum(e => e.ExpectedGuests)</span><span class="stat-meta">Across upcoming events</span></div>
+</div>
+
+<section class="panel">
+    <div class="panel-head"><h2>All events</h2><span class="panel-note">@Model.Count events</span></div>
+    @if (!Model.Any())
+    {
+        <div class="empty-state"><strong>No events yet</strong>Create your first event, then add what it needs.</div>
+    }
+    else
+    {
+        <div class="table-wrap">
+        <table class="table table-hover">
+            <thead><tr><th>Event</th><th>Date (UTC)</th><th>Venue</th><th class="num">Guests</th><th>Needs</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+            @foreach (var e in Model)
+            {
+                <tr data-href="@Url.Action("Details", new { id = e.Id })">
+                    <td><div class="with-tile"><span class="date-tile"><small>@e.StartsAtUtc.ToString("MMM")</small><b>@e.StartsAtUtc.ToString("dd")</b></span><span class="cell-title">@e.Name</span></div></td>
+                    <td class="text-muted">@e.StartsAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td>@e.Venue</td>
+                    <td class="num">@e.ExpectedGuests</td>
+                    <td>@e.Requirements.Count categories</td>
+                    <td><partial name="_StatusBadge" model="@e.Status.ToString()" /></td>
+                    <td class="text-end"><a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@e.Id">Open</a></td>
+                </tr>
+            }
+            </tbody>
+        </table>
+        </div>
+    }
+</section>

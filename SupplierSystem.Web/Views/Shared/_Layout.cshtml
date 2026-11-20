@@ -1,0 +1,88 @@
+@{
+    var signedIn = User.Identity?.IsAuthenticated == true;
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString();
+    string Active(bool on) => on ? "side-link active" : "side-link";
+    var userName = User.Identity?.Name ?? "";
+    var initials = userName.Length >= 2 ? userName[..2] : userName;
+    var role = User.IsInRole(Roles.PlatformAdmin) ? "Platform admin"
+             : User.IsInRole(Roles.SupplierManager) ? "Supplier manager"
+             : User.IsInRole(Roles.SupplierStaff) ? "Supplier staff" : "Staff";
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Supplier System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/theme.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body class="theme-supplier" data-controller="@controller?.ToLowerInvariant()" data-action="@ViewContext.RouteData.Values["action"]?.ToString()?.ToLowerInvariant()">
+@if (signedIn)
+{
+    <div class="app">
+        <aside class="sidebar">
+            <a class="brand" asp-controller="Orders" asp-action="Index">
+                <span class="brand-mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg></span>
+                <span><span class="brand-name">Supplier System</span><span class="brand-sub">Staff workspace</span></span>
+            </a>
+            <nav class="side-nav" aria-label="Main">
+                <span class="nav-section">Work</span>
+                <a class="@Active(controller == "Orders")" asp-controller="Orders" asp-action="Index">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v16H4z"/><path d="M4 9h16M9 4v16"/></svg>Orders</a>
+                <a class="@Active(controller == "Invoices")" asp-controller="Invoices" asp-action="Index">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg>Invoices</a>
+                <a class="@Active(controller == "Products")" asp-controller="Products" asp-action="Index">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg>@(User.IsInRole(Roles.PlatformAdmin) ? "Suppliers" : "Catalog & stock")</a>
+            </nav>
+            <div class="user-card">
+                <span class="avatar">@initials</span>
+                <span class="user-meta"><strong>@role</strong><span>@userName</span></span>
+                <form asp-controller="Account" asp-action="Logout" method="post">
+                    <button type="submit" class="icon-btn" aria-label="Log out" title="Log out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><path d="M10 17l-5-5 5-5M5 12h12"/></svg></button>
+                </form>
+            </div>
+        </aside>
+        <main class="main" role="main">
+            <partial name="_Alerts" />
+            @RenderBody()
+        </main>
+    </div>
+}
+else
+{
+    <div class="auth">
+        <aside class="auth-aside">
+            <span class="brand">
+                <span class="brand-mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg></span>
+                <span class="brand-name">Supplier System</span>
+            </span>
+            <div>
+                <h2 class="auth-headline">Every order, on time.</h2>
+                <p class="auth-lead">Manage your catalog and stock, and move incoming orders from received to delivered.</p>
+            </div>
+            <span class="auth-foot">&copy; @DateTime.UtcNow.Year Supplier System</span>
+        </aside>
+        <main class="auth-main" role="main">
+            <div class="auth-card">
+                <partial name="_Alerts" />
+                @RenderBody()
+            </div>
+        </main>
+    </div>
+}
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @if (signedIn)
+    {
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
+    <script src="~/js/live.js" asp-append-version="true"></script>
+    }
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

@@ -1,0 +1,14 @@
+@model SupplyOrderStatus
+@{
+    // Same colors as EventHub.Web/Views/Shared/_StatusBadge.cshtml
+    var tone = Model switch
+    {
+        SupplyOrderStatus.Pending or SupplyOrderStatus.Received => "amber",
+        SupplyOrderStatus.Accepted => "sky",
+        SupplyOrderStatus.Preparing or SupplyOrderStatus.Dispatched => "indigo",
+        SupplyOrderStatus.Delivered => "green",
+        SupplyOrderStatus.Rejected => "red",
+        _ => "gray"
+    };
+}
+<span class="status status-@tone">@Model</span>

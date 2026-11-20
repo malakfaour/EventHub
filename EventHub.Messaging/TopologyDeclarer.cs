@@ -45,8 +45,8 @@ public sealed class TopologyDeclarer
 
     private async Task DeclareAsync(IChannel channel, CancellationToken ct)
     {
-        await channel.ExchangeDeclareAsync(Topology.ClientExchange, ExchangeType.Topic, durable: true, cancellationToken: ct);
-        await channel.ExchangeDeclareAsync(Topology.AdminExchange, ExchangeType.Topic, durable: true, cancellationToken: ct);
+        await channel.ExchangeDeclareAsync(Topology.EventHubExchange, ExchangeType.Topic, durable: true, cancellationToken: ct);
+        await channel.ExchangeDeclareAsync(Topology.SupplierExchange, ExchangeType.Topic, durable: true, cancellationToken: ct);
         await channel.ExchangeDeclareAsync(Topology.DeadLetterExchange, ExchangeType.Direct, durable: true, cancellationToken: ct);
 
         foreach (var binding in Topology.Bindings)

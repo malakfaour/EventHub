@@ -1,0 +1,46 @@
+@model List<EventHub.Web.ViewModels.AdminOrderRow>
+@{ ViewData["Title"] = "Supply orders"; }
+<div class="page-header">
+    <div>
+        <div class="crumbs">Admin / <b>Supply orders</b></div>
+        <h1 class="page-title">Supply orders</h1>
+    </div>
+</div>
+<section class="panel">
+    <div class="panel-head"><h2>All orders</h2><span class="panel-note">@Model.Count orders. Cancelling is an override for orders stuck with an unresponsive supplier.</span></div>
+    @if (!Model.Any())
+    {
+        <div class="empty-state"><strong>No orders yet</strong></div>
+    }
+    else
+    {
+        <div class="table-wrap">
+        <table class="table table-hover">
+            <thead><tr><th>Event</th><th>Supplier</th><th>Category</th><th>Placed</th><th>Last update</th><th class="num">Total</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+            @foreach (var o in Model)
+            {
+                <tr>
+                    <td class="cell-title">@o.EventName</td>
+                    <td>@o.SupplierName</td>
+                    <td>@SupplyCategories.DisplayName(o.Category)</td>
+                    <td class="text-muted">@o.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td class="text-muted">@o.UpdatedAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td class="num fw-semibold">@o.Total.ToString("N2")</td>
+                    <td><partial name="_StatusBadge" model="@o.Status.ToString()" /></td>
+                    <td class="text-end">
+                        @if (o.CanBeCancelled)
+                        {
+                            <form asp-action="CancelOrder" asp-route-id="@o.Id" method="post" class="d-flex gap-2 justify-content-end">
+                                <input name="reason" class="form-control form-control-sm" style="max-width:180px" placeholder="Reason" required maxlength="200" />
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Cancel</button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+        </div>
+    }
+</section>

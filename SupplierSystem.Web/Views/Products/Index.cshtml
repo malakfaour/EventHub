@@ -1,0 +1,66 @@
+@using Microsoft.AspNetCore.Authorization
+@model List<SupplierSystem.Web.Models.Product>
+@{
+    ViewData["Title"] = "Catalog & stock";
+    var canManage = (await AuthorizationService.AuthorizeAsync(User, "CanManageCatalog")).Succeeded;
+    var activeCount = Model.Count(p => p.IsActive);
+    var hidden = Model.Count - activeCount;
+    var reserved = Model.Sum(p => p.Inventory?.ReservedQuantity ?? 0);
+    var low = Model.Count(p => p.IsActive && p.Inventory?.IsLow == true);
+}
+@inject Microsoft.AspNetCore.Authorization.IAuthorizationService AuthorizationService
+<div class="page-header">
+    <div>
+        <div class="crumbs">Workspace / <b>Catalog &amp; stock</b></div>
+        <h1 class="page-title">Catalog &amp; stock</h1>
+    </div>
+    @if (canManage)
+    {
+        <div class="page-actions"><a class="btn btn-primary" asp-action="Create"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add product</a></div>
+    }
+</div>
+
+<div class="stat-grid">
+    <div class="stat-card"><span class="stat-label">Active products</span><span class="stat-value">@activeCount</span><span class="stat-meta">@hidden hidden from Event Hub</span></div>
+    <div class="stat-card"><span class="stat-label">Reserved for orders</span><span class="stat-value">@reserved</span><span class="stat-meta">Units held by accepted orders</span></div>
+    <div class="stat-card @(low > 0 ? "is-warn" : "")"><span class="stat-label">Low stock</span><span class="stat-value">@low</span><span class="stat-meta">@(low > 0 ? "Restock before accepting more" : "All good")</span></div>
+</div>
+
+<section class="panel">
+    <div class="panel-head"><h2>Products</h2><span class="panel-note">Available = on hand − reserved</span></div>
+    @if (!Model.Any())
+    {
+        <div class="empty-state"><strong>No products yet</strong>Add your first product to publish it to the Event Hub.</div>
+    }
+    else
+    {
+        <div class="table-wrap">
+        <table class="table table-hover">
+            <thead><tr><th>Product</th><th>Unit</th><th class="num">Price</th><th class="num">On hand</th><th class="num">Reserved</th><th>Available</th><th>State</th><th></th></tr></thead>
+            <tbody>
+            @foreach (var p in Model)
+            {
+                var onHand = p.Inventory?.QuantityOnHand ?? 0;
+                var available = p.Inventory?.Available ?? 0;
+                var pct = onHand > 0 ? Math.Clamp(available * 100 / onHand, 0, 100) : 0;
+                var isLow = p.Inventory?.IsLow == true;
+                <tr>
+                    <td><div class="with-tile"><span class="tile">@(p.Name.Length > 0 ? p.Name[..1] : "?")</span><span class="cell-title">@p.Name</span></div></td>
+                    <td class="text-muted">@p.Unit</td>
+                    <td class="num">@p.Price.ToString("N2")</td>
+                    <td class="num">@onHand</td>
+                    <td class="num text-muted">@(p.Inventory?.ReservedQuantity ?? 0)</td>
+                    <td><span class="meter"><span class="meter-track"><span class="meter-fill @(!p.IsActive ? "is-off" : isLow ? "is-warn" : "")" style="width:@pct%; display:block"></span></span><b>@available</b></span></td>
+                    <td>
+                        @if (!p.IsActive) { <span class="status status-gray">Hidden</span> }
+                        else if (isLow) { <span class="status status-amber">Low stock</span> }
+                        else { <span class="status status-green">OK</span> }
+                    </td>
+                    <td class="text-end">@if (canManage) { <a class="btn btn-sm btn-outline-primary" asp-action="Edit" asp-route-id="@p.Id">Edit</a> }</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+        </div>
+    }
+</section>

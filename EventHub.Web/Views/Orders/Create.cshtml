@@ -1,0 +1,58 @@
+@model EventHub.Web.ViewModels.PlaceOrderViewModel
+@{
+    var ev = (EventHub.Web.Models.Event?)ViewBag.Event;
+    var supplier = (EventHub.Web.Models.CatalogSupplier?)ViewBag.Supplier;
+    ViewData["Title"] = "New order";
+}
+<a class="back-link" asp-controller="Events" asp-action="Details" asp-route-id="@Model.EventId"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>@ev?.Name</a>
+<div class="page-header">
+    <div>
+        <div class="crumbs">New order · <b>@ev?.Name</b></div>
+        <h1 class="page-title">Order from @supplier?.Name</h1>
+        <p class="page-sub">Prices are fixed when you send the order.</p>
+    </div>
+</div>
+<form asp-action="Create" method="post">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <input type="hidden" asp-for="EventId" />
+    <input type="hidden" asp-for="SupplierId" />
+    <section class="panel">
+        <div class="panel-head"><h2>Items</h2><span class="panel-note">Leave 0 for items you don't need</span></div>
+        <div class="table-wrap">
+        <table class="table">
+            <thead><tr><th>Item</th><th>Unit</th><th class="num">Price</th><th style="width:160px">Quantity</th></tr></thead>
+            <tbody>
+            @for (var i = 0; i < Model.Items.Count; i++)
+            {
+                var product = supplier?.Products.FirstOrDefault(p => p.Id == Model.Items[i].ProductId);
+                if (product is null) { continue; }
+                <tr class="@(product.IsAvailable ? "" : "text-muted")">
+                    <td class="cell-title">@product.Name @if (!product.IsAvailable) { <span class="status status-gray ms-2">Unavailable</span> }</td>
+                    <td class="text-muted">@product.Unit</td>
+                    <td class="num">@product.Price.ToString("N2")</td>
+                    <td>
+                        <input type="hidden" asp-for="Items[i].ProductId" />
+                        <input asp-for="Items[i].Quantity" type="number" min="0" class="form-control" disabled="@(!product.IsAvailable)" aria-label="Quantity of @product.Name" />
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+        </div>
+    </section>
+    <section class="panel">
+        <div class="panel-head"><h2>Delivery</h2></div>
+        <div class="panel-body">
+            <div class="row g-3 mb-3">
+                <div class="col-md-4"><label asp-for="DeliveryAtUtc" class="form-label"></label><input asp-for="DeliveryAtUtc" type="datetime-local" class="form-control" /></div>
+                <div class="col-md-8"><label asp-for="DeliveryAddress" class="form-label"></label><input asp-for="DeliveryAddress" class="form-control" /><span asp-validation-for="DeliveryAddress" class="text-danger"></span></div>
+            </div>
+            <div class="mb-3"><label asp-for="Notes" class="form-label"></label><textarea asp-for="Notes" class="form-control" rows="2"></textarea></div>
+            <div class="form-actions">
+                <button class="btn btn-primary">Send order</button>
+                <a class="btn btn-link" asp-controller="Events" asp-action="Details" asp-route-id="@Model.EventId">Cancel</a>
+            </div>
+        </div>
+    </section>
+</form>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

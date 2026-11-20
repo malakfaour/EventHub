@@ -1,0 +1,12 @@
+@model DateTime
+@{
+    // Countdown chip for a ticket: "In 12 days", "Tomorrow", "Today", "Event passed". Model = event start (UTC).
+    var days = (Model.Date - DateTime.UtcNow.Date).Days;
+    string text;
+    string css = "";
+    if (days == 0) { text = "Today"; css = "is-today"; }
+    else if (days == 1) { text = "Tomorrow"; }
+    else if (days >= 2) { text = $"In {days} days"; }
+    else { text = "Event passed"; css = "is-past"; }
+}
+<span class="when-chip @css">@text</span>

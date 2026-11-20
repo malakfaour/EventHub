@@ -1,0 +1,14 @@
+@model string
+@{
+    // Same colors as SupplierSystem.Web/Views/Shared/_StatusBadge.cshtml
+    var tone = Model switch
+    {
+        "Draft" or "Pending" or "Received" => "amber",
+        "Planned" or "Accepted" => "sky",
+        "Preparing" or "Dispatched" => "indigo",
+        "Completed" or "Delivered" or "Paid" or "Published" => "green",
+        "Rejected" or "Failed" => "red",
+        _ => "gray"
+    };
+}
+<span class="status status-@tone">@Model</span>

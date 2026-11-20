@@ -1,0 +1,39 @@
+@model List<EventHub.Web.ViewModels.AdminEventRow>
+@{ ViewData["Title"] = "All events"; }
+<div class="page-header">
+    <div>
+        <div class="crumbs">Admin / <b>Events</b></div>
+        <h1 class="page-title">All events</h1>
+    </div>
+</div>
+<section class="panel">
+    <div class="panel-head"><h2>Every organizer's events</h2><span class="panel-note">@Model.Count events</span></div>
+    @if (!Model.Any())
+    {
+        <div class="empty-state"><strong>No events yet</strong></div>
+    }
+    else
+    {
+        <div class="table-wrap">
+        <table class="table table-hover">
+            <thead><tr><th>Event</th><th>Organizer</th><th>Venue</th><th>Starts</th><th class="num">Guests</th><th class="num">Orders</th><th class="num">Tickets sold</th><th>Status</th><th>On sale</th></tr></thead>
+            <tbody>
+            @foreach (var e in Model)
+            {
+                <tr>
+                    <td class="cell-title">@e.Name</td>
+                    <td>@e.Organizer</td>
+                    <td class="text-muted">@e.Venue</td>
+                    <td class="text-muted">@e.StartsAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td class="num">@e.ExpectedGuests</td>
+                    <td class="num">@e.Orders</td>
+                    <td class="num">@e.TicketsSold</td>
+                    <td><partial name="_StatusBadge" model="@e.Status.ToString()" /></td>
+                    <td>@(e.IsPublished ? "Yes" : "No")</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+        </div>
+    }
+</section>

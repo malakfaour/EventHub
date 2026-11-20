@@ -1,0 +1,65 @@
+@model RegisterViewModel
+@{
+    ViewData["Title"] = "Register";
+}
+<h1>Create your account</h1>
+<p class="auth-sub">Buy tickets to great events, or plan your own</p>
+<form asp-action="Register" method="post">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <div class="mb-3">
+        <label class="form-label">I want to</label>
+        <div class="d-grid gap-2">
+            <label class="form-check d-flex gap-2 align-items-center border rounded-3 p-2 ps-3">
+                <input class="form-check-input mt-0" type="radio" asp-for="AccountType" value="Client" />
+                <span><strong>Buy tickets</strong><br /><small class="text-muted">Find events and get my tickets</small></span>
+            </label>
+            <label class="form-check d-flex gap-2 align-items-center border rounded-3 p-2 ps-3">
+                <input class="form-check-input mt-0" type="radio" asp-for="AccountType" value="Organizer" />
+                <span><strong>Organize events</strong><br /><small class="text-muted">Plan events, sell tickets, order supplies</small></span>
+            </label>
+        </div>
+    </div>
+    <div class="mb-3">
+        <label asp-for="DisplayName" class="form-label"></label>
+        <input asp-for="DisplayName" class="form-control" />
+        <span asp-validation-for="DisplayName" class="text-danger"></span>
+    </div>
+    <div class="mb-3" id="org-field">
+        <label asp-for="Organization" class="form-label"></label>
+        <input asp-for="Organization" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="Email" class="form-label"></label>
+        <input asp-for="Email" class="form-control" autocomplete="username" />
+        <span asp-validation-for="Email" class="text-danger"></span>
+    </div>
+    <div class="row g-3 mb-3">
+        <div class="col-sm-6">
+            <label asp-for="Password" class="form-label"></label>
+            <input asp-for="Password" class="form-control" autocomplete="new-password" />
+            <span asp-validation-for="Password" class="text-danger"></span>
+        </div>
+        <div class="col-sm-6">
+            <label asp-for="ConfirmPassword" class="form-label"></label>
+            <input asp-for="ConfirmPassword" class="form-control" autocomplete="new-password" />
+            <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+        </div>
+    </div>
+    <button type="submit" class="btn btn-primary">Create account</button>
+</form>
+<p class="auth-alt">Already have an account? <a asp-action="Login">Log in</a></p>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            var radios = document.querySelectorAll('input[name="AccountType"]');
+            var org = document.getElementById('org-field');
+            function sync() {
+                var v = document.querySelector('input[name="AccountType"]:checked');
+                org.style.display = v && v.value === 'Organizer' ? '' : 'none';
+            }
+            radios.forEach(function (r) { r.addEventListener('change', sync); });
+            sync();
+        })();
+    </script>
+}

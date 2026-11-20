@@ -9,8 +9,6 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-eventhub}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-eventhub_pw}
-    volumes:
-      - rabbitdata:/var/lib/rabbitmq
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
       interval: 10s
@@ -29,5 +27,4 @@ services:
       - sqldata:/var/opt/mssql
 
 volumes:
-  rabbitdata:
   sqldata:

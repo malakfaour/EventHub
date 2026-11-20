@@ -1,0 +1,44 @@
+@model EventHub.Web.ViewModels.PayInvoiceViewModel
+@{
+    ViewData["Title"] = "Pay invoice";
+    var invoice = (Invoice)ViewBag.Invoice;
+}
+<a class="back-link" asp-action="Index">&larr; Invoices</a>
+<div class="page-header">
+    <div>
+        <div class="crumbs">Invoice · <b>@invoice.Number</b></div>
+        <h1 class="page-title">Pay @invoice.Order?.SupplierName</h1>
+    </div>
+</div>
+
+<div class="split">
+    <section class="split-main">
+        <div class="panel panel-body mb-0">
+            <h2 class="panel-title mb-3">Card details</h2>
+            <form asp-action="Pay" asp-route-id="@invoice.Id" method="post" autocomplete="on">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                <div class="mb-3"><label asp-for="CardHolder" class="form-label"></label><input asp-for="CardHolder" class="form-control" autocomplete="cc-name" /><span asp-validation-for="CardHolder" class="text-danger"></span></div>
+                <div class="mb-3"><label asp-for="CardNumber" class="form-label"></label><input asp-for="CardNumber" class="form-control" inputmode="numeric" autocomplete="cc-number" placeholder="4242 4242 4242 4242" /><span asp-validation-for="CardNumber" class="text-danger"></span></div>
+                <div class="row g-3 mb-3">
+                    <div class="col-6"><label asp-for="Expiry" class="form-label"></label><input asp-for="Expiry" class="form-control" autocomplete="cc-exp" placeholder="12/28" /><span asp-validation-for="Expiry" class="text-danger"></span></div>
+                    <div class="col-6"><label asp-for="Cvv" class="form-label"></label><input asp-for="Cvv" class="form-control" inputmode="numeric" autocomplete="cc-csc" placeholder="123" /><span asp-validation-for="Cvv" class="text-danger"></span></div>
+                </div>
+                <button class="btn btn-primary btn-lg">Pay @invoice.Amount.ToString("N2") @invoice.Currency</button>
+                <p class="text-muted small mt-3 mb-0">Demo payment gateway. Nothing is charged. A card ending in <code>0000</code> is declined and <code>9999</code> has insufficient funds.</p>
+            </form>
+        </div>
+    </section>
+    <aside class="split-side">
+        <div class="panel panel-body mb-0">
+            <h2 class="panel-title mb-3">Invoice</h2>
+            <dl class="meta-list" style="grid-template-columns: 90px 1fr">
+                <dt>Event</dt><dd>@invoice.Order?.Event?.Name</dd>
+                <dt>Supplier</dt><dd>@invoice.Order?.SupplierName</dd>
+                <dt>Issued</dt><dd>@invoice.IssuedAtUtc.ToString("yyyy-MM-dd")</dd>
+                <dt>Due</dt><dd>@invoice.DueAtUtc.ToString("yyyy-MM-dd")</dd>
+                <dt>Amount</dt><dd><b>@invoice.Amount.ToString("N2") @invoice.Currency</b></dd>
+            </dl>
+        </div>
+    </aside>
+</div>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

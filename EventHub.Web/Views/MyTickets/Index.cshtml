@@ -1,0 +1,54 @@
+@model List<EventHub.Web.Models.TicketPurchase>
+@{
+    ViewData["Title"] = "My tickets";
+    var now = DateTime.UtcNow;
+    var valid = Model.Where(p => p.Status == PurchaseStatus.Paid).ToList();
+    var upcomingTickets = valid.Where(p => p.Event!.StartsAtUtc >= now.Date).Sum(p => p.Quantity);
+    // Upcoming first (soonest on top), then past ones.
+    var ordered = Model.OrderBy(p => p.Event!.StartsAtUtc < now.Date)
+                       .ThenBy(p => p.Event!.StartsAtUtc < now.Date ? -p.Event!.StartsAtUtc.Ticks : p.Event!.StartsAtUtc.Ticks)
+                       .ToList();
+}
+<section class="pub-wrap pub-section">
+    <div class="wallet-head">
+        <div>
+            <h1 class="page-title mb-1">My tickets</h1>
+            <p class="page-sub mb-0">Show the QR code at the door. Each ticket works once.</p>
+        </div>
+        @if (Model.Any())
+        {
+            <span class="wallet-count">@upcomingTickets upcoming @(upcomingTickets == 1 ? "ticket" : "tickets")</span>
+        }
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="panel"><div class="empty-state">
+            <strong>No tickets yet</strong>
+            Find an event you like and your tickets will show up here.
+            <div class="mt-3"><a class="btn btn-primary" asp-controller="Discover" asp-action="Index">Discover events</a></div>
+        </div></div>
+    }
+    <div class="purchase-list">
+        @foreach (var p in ordered)
+        {
+            var ev = p.Event!;
+            var past = ev.StartsAtUtc < now.Date;
+            <a class="purchase-card @(past || p.Status != PurchaseStatus.Paid ? "is-past" : "")" asp-action="Details" asp-route-id="@p.Id">
+                <span class="purchase-cover @EventTypes.Css(ev.EventType)"><span class="cover-icon" aria-hidden="true">@EventTypes.Icon(ev.EventType)</span></span>
+                <span class="purchase-main">
+                    <b>@ev.Name</b>
+                    <small>@ev.StartsAtUtc.ToString("ddd d MMM yyyy · HH:mm") UTC &middot; @ev.Venue</small>
+                    <span class="purchase-when">
+                        @if (p.Status == PurchaseStatus.Paid) { <partial name="_WhenChip" model="ev.StartsAtUtc" /> }
+                        else { <partial name="_StatusBadge" model="@p.Status.ToString()" /> }
+                    </span>
+                </span>
+                <span class="purchase-side">
+                    <span class="purchase-qty">@p.Quantity &times; @p.TicketTypeName</span>
+                    <b class="purchase-total">@(p.Total == 0 ? "Free" : "$" + p.Total.ToString("N2"))</b>
+                </span>
+            </a>
+        }
+    </div>
+</section>

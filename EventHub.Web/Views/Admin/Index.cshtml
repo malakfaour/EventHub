@@ -1,0 +1,59 @@
+@model EventHub.Web.ViewModels.ReportData
+@using System.Text.Json
+@{
+    ViewData["Title"] = "Overview";
+    string Labels(List<LabelValue> l) => JsonSerializer.Serialize(l.Select(x => x.Label));
+    string Values(List<LabelValue> l) => JsonSerializer.Serialize(l.Select(x => x.Value));
+}
+<div class="page-header">
+    <div>
+        <div class="crumbs">Admin / <b>Overview</b></div>
+        <h1 class="page-title">Platform overview</h1>
+    </div>
+    <div class="page-actions">
+        <a class="btn btn-outline-primary" asp-action="ExportExcel">Export Excel</a>
+        <a class="btn btn-primary" asp-action="ExportPdf">Export PDF</a>
+    </div>
+</div>
+
+<div class="stat-grid">
+    <div class="stat-card is-accent"><span class="stat-label">Events</span><span class="stat-value">@Model.Events</span><span class="stat-meta">@Model.PublishedEvents published for sale</span></div>
+    <div class="stat-card"><span class="stat-label">Users</span><span class="stat-value">@Model.Users</span><span class="stat-meta">@Model.Organizers organizers, @Model.Clients clients</span></div>
+    <div class="stat-card"><span class="stat-label">Ticket revenue</span><span class="stat-value">@Model.TicketRevenue.ToString("N2")</span><span class="stat-meta">@Model.TicketsSold tickets sold</span></div>
+    <div class="stat-card"><span class="stat-label">Supply spend</span><span class="stat-value">@Model.SupplySpend.ToString("N2")</span><span class="stat-meta">@Model.Orders orders placed</span></div>
+    <div class="stat-card"><span class="stat-label">Rejected orders</span><span class="stat-value">@Model.RejectionRate%</span><span class="stat-meta">Share of all supply orders</span></div>
+    <div class="stat-card"><span class="stat-label">Cancelled orders</span><span class="stat-value">@Model.CancellationRate%</span><span class="stat-meta">Share of all supply orders</span></div>
+</div>
+
+<div class="chart-grid">
+    <section class="panel"><div class="panel-head"><h2>Events per month</h2></div><div class="panel-body chart-box"><canvas id="cMonth"></canvas></div></section>
+    <section class="panel"><div class="panel-head"><h2>Events by status</h2></div><div class="panel-body chart-box"><canvas id="cEventStatus"></canvas></div></section>
+    <section class="panel"><div class="panel-head"><h2>Orders by category</h2></div><div class="panel-body chart-box"><canvas id="cCategory"></canvas></div></section>
+    <section class="panel"><div class="panel-head"><h2>Supply spend by category</h2></div><div class="panel-body chart-box"><canvas id="cSpend"></canvas></div></section>
+    <section class="panel"><div class="panel-head"><h2>Orders by status</h2></div><div class="panel-body chart-box"><canvas id="cOrderStatus"></canvas></div></section>
+    <section class="panel"><div class="panel-head"><h2>Top events by ticket revenue</h2></div><div class="panel-body chart-box"><canvas id="cRevenue"></canvas></div></section>
+</div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <script>
+        const palette = ['#4f46e5', '#0ea5e9', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#14b8a6', '#ec4899'];
+        function chart(id, type, labels, data, label) {
+            const circular = type === 'doughnut';
+            new Chart(document.getElementById(id), {
+                type: type,
+                data: { labels: labels, datasets: [{ label: label, data: data,
+                    backgroundColor: circular ? palette : palette[0], borderRadius: circular ? 0 : 6 }] },
+                options: { maintainAspectRatio: false,
+                    plugins: { legend: { display: circular, position: 'bottom' } },
+                    scales: circular ? {} : { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+            });
+        }
+        chart('cMonth', 'bar', @Html.Raw(Labels(Model.EventsByMonth)), @Html.Raw(Values(Model.EventsByMonth)), 'Events');
+        chart('cEventStatus', 'doughnut', @Html.Raw(Labels(Model.EventsByStatus)), @Html.Raw(Values(Model.EventsByStatus)), 'Events');
+        chart('cCategory', 'doughnut', @Html.Raw(Labels(Model.OrdersByCategory)), @Html.Raw(Values(Model.OrdersByCategory)), 'Orders');
+        chart('cSpend', 'bar', @Html.Raw(Labels(Model.SpendByCategory)), @Html.Raw(Values(Model.SpendByCategory)), 'Spend');
+        chart('cOrderStatus', 'bar', @Html.Raw(Labels(Model.OrdersByStatus)), @Html.Raw(Values(Model.OrdersByStatus)), 'Orders');
+        chart('cRevenue', 'bar', @Html.Raw(Labels(Model.RevenueByEvent)), @Html.Raw(Values(Model.RevenueByEvent)), 'Revenue');
+    </script>
+}

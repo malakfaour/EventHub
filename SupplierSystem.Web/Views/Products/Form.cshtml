@@ -1,0 +1,29 @@
+@model SupplierSystem.Web.ViewModels.ProductViewModel
+@{ ViewData["Title"] = "Product"; }
+<a class="back-link" asp-action="Index"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>Catalog &amp; stock</a>
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Product</h1>
+        <p class="page-sub">Active products are published to the Event Hub catalog.</p>
+    </div>
+</div>
+<section class="panel form-narrow">
+    <form method="post" class="panel-body">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <div class="row g-3 mb-3">
+            <div class="col-md-8"><label asp-for="Name" class="form-label"></label><input asp-for="Name" class="form-control" /><span asp-validation-for="Name" class="text-danger"></span></div>
+            <div class="col-md-4"><label asp-for="Unit" class="form-label"></label><input asp-for="Unit" class="form-control" /><span asp-validation-for="Unit" class="text-danger"></span></div>
+        </div>
+        <div class="row g-3 mb-3">
+            <div class="col-md-4"><label asp-for="Price" class="form-label"></label><input asp-for="Price" class="form-control" /><span asp-validation-for="Price" class="text-danger"></span></div>
+            <div class="col-md-4"><label asp-for="QuantityOnHand" class="form-label"></label><input asp-for="QuantityOnHand" class="form-control" /><span asp-validation-for="QuantityOnHand" class="text-danger"></span></div>
+            <div class="col-md-4"><label asp-for="MinLevel" class="form-label"></label><input asp-for="MinLevel" class="form-control" /><span asp-validation-for="MinLevel" class="text-danger"></span></div>
+        </div>
+        <div class="form-check mb-3"><input asp-for="IsActive" class="form-check-input" /><label asp-for="IsActive" class="form-check-label"></label></div>
+        <div class="form-actions">
+            <button class="btn btn-primary">Save product</button>
+            <a class="btn btn-link" asp-action="Index">Cancel</a>
+        </div>
+    </form>
+</section>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

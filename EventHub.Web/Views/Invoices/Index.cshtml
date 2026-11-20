@@ -1,0 +1,53 @@
+@model List<EventHub.Web.Models.Invoice>
+@{
+    ViewData["Title"] = "Invoices";
+    var due = Model.Where(i => i.Status == InvoiceStatus.Due).ToList();
+}
+<div class="page-header">
+    <div>
+        <div class="crumbs">Workspace / <b>Invoices</b></div>
+        <h1 class="page-title">Invoices</h1>
+    </div>
+</div>
+
+<div class="stat-grid">
+    <div class="stat-card is-accent"><span class="stat-label">To pay</span><span class="stat-value">@due.Count</span><span class="stat-meta">@due.Sum(i => i.Amount).ToString("N2") outstanding</span></div>
+    <div class="stat-card"><span class="stat-label">Overdue</span><span class="stat-value">@due.Count(i => i.IsOverdue)</span><span class="stat-meta">Past the due date</span></div>
+    <div class="stat-card"><span class="stat-label">Paid</span><span class="stat-value">@Model.Count(i => i.Status == InvoiceStatus.Paid)</span><span class="stat-meta">@Model.Where(i => i.Status == InvoiceStatus.Paid).Sum(i => i.Amount).ToString("N2") in total</span></div>
+</div>
+
+<section class="panel">
+    <div class="panel-head"><h2>Supplier invoices</h2><span class="panel-note">Suppliers send an invoice once an order is delivered.</span></div>
+    @if (!Model.Any())
+    {
+        <div class="empty-state"><strong>No invoices yet</strong>They appear here after a supplier delivers an order and invoices it.</div>
+    }
+    else
+    {
+        <div class="table-wrap">
+        <table class="table table-hover">
+            <thead><tr><th>Invoice</th><th>Event</th><th>Supplier</th><th>Due</th><th class="num">Amount</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+            @foreach (var i in Model)
+            {
+                <tr data-href="@Url.Action("Details", "Orders", new { id = i.OrderId })">
+                    <td class="cell-title">@i.Number</td>
+                    <td>@i.Order?.Event?.Name</td>
+                    <td>@i.Order?.SupplierName</td>
+                    <td class="text-muted">@i.DueAtUtc.ToString("yyyy-MM-dd")</td>
+                    <td class="num fw-semibold">@i.Amount.ToString("N2") @i.Currency</td>
+                    <td>
+                        @if (i.Status == InvoiceStatus.Paid) { <span class="status status-green">Paid</span> }
+                        else if (i.IsOverdue) { <span class="status status-red">Overdue</span> }
+                        else { <span class="status status-amber">Due</span> }
+                    </td>
+                    <td class="text-end">
+                        @if (i.Status == InvoiceStatus.Due) { <a class="btn btn-sm btn-primary" asp-action="Pay" asp-route-id="@i.Id">Pay</a> }
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+        </div>
+    }
+</section>

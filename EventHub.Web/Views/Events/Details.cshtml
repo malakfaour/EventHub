@@ -1,0 +1,197 @@
+@model EventHub.Web.Models.Event
+@{
+    ViewData["Title"] = Model.Name;
+    var orders = (List<EventHub.Web.Models.SupplyOrder>)ViewBag.Orders;
+    var missing = SupplyCategories.All.Where(c => Model.Requirements.All(r => r.Category != c)).ToList();
+    var ordered = Model.Requirements.Count(r => orders.Any(o => o.Category == r.Category && o.IsActive));
+    string[] stepLabels = { "Sent", "Accepted", "Preparing", "Dispatched", "Delivered" };
+    int StepOf(string status) => status switch
+    {
+        "Accepted" => 1, "Preparing" => 2, "Dispatched" => 3, "Delivered" => 4, _ => 0
+    };
+}
+<a class="back-link" asp-action="Index"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>My events</a>
+
+<div class="hero">
+    <div>
+        <partial name="_StatusBadge" model="@Model.Status.ToString()" />
+        @if (Model.IsPublished) { <partial name="_StatusBadge" model="@("Published")" /> }
+        <h1>@Model.Name</h1>
+        <div class="hero-meta">
+            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>@Model.StartsAtUtc.ToString("ddd d MMM yyyy · HH:mm") UTC</span>
+            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.5-7-12a7 7 0 0114 0c0 5.5-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>@Model.Venue</span>
+            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2 20c0-3.5 3-6 7-6s7 2.5 7 6"/><path d="M16 4.5a3.5 3.5 0 010 7M22 20c0-3-2-5-5-5.7"/></svg>@Model.ExpectedGuests guests</span>
+        </div>
+        @if (!string.IsNullOrWhiteSpace(Model.Description)) { <p class="hero-desc">@Model.Description</p> }
+    </div>
+    <div class="page-actions">
+        @if (Model.IsOpen)
+        {
+            <a class="btn btn-ghost-light" asp-action="Edit" asp-route-id="@Model.Id">Edit</a>
+        }
+        @if (Model.Status == EventHub.Web.Models.EventStatus.Draft)
+        {
+            <form asp-action="Plan" asp-route-id="@Model.Id" method="post"><button class="btn btn-success">Mark as planned</button></form>
+        }
+        @if (Model.Status == EventHub.Web.Models.EventStatus.Planned)
+        {
+            <form asp-action="Complete" asp-route-id="@Model.Id" method="post"><button class="btn btn-success">Complete</button></form>
+        }
+        @if (Model.IsOpen)
+        {
+            <form asp-action="Cancel" asp-route-id="@Model.Id" method="post" onsubmit="return confirm('Cancel this event and its open orders?');"><button class="btn btn-outline-danger">Cancel event</button></form>
+        }
+    </div>
+</div>
+
+<div class="split">
+    <section class="split-main">
+        <div class="section-head">
+            <h2>What this event needs</h2>
+            <span class="d-flex align-items-center gap-3">
+                <span class="text-muted small">@ordered of @Model.Requirements.Count ordered</span>
+                @if (Model.IsOpen)
+                {
+                    <form asp-action="Suggest" asp-route-id="@Model.Id" method="post"><button class="btn btn-sm btn-outline-primary">&#10024; Suggest needs</button></form>
+                }
+            </span>
+        </div>
+
+        @if (!Model.Requirements.Any())
+        {
+            <div class="panel"><div class="empty-state"><strong>No needs yet</strong>Add catering, decoration or sound, then find a supplier for each.</div></div>
+        }
+
+        @foreach (var r in Model.Requirements.OrderBy(r => r.Category))
+        {
+            var order = orders.FirstOrDefault(o => o.Category == r.Category && o.IsActive);
+            var name = SupplyCategories.DisplayName(r.Category);
+            if (order is not null)
+            {
+                var at = StepOf(order.Status.ToString());
+                <article class="need-card">
+                    <div class="need-row">
+                        <div class="with-tile">
+                            <span class="tile need-tile">@(name[..1])</span>
+                            <div><span class="need-title">@name</span><span class="need-notes">@(r.Notes ?? "No notes")</span></div>
+                        </div>
+                        <div class="with-tile">
+                            <a class="fw-semibold text-decoration-none" asp-controller="Orders" asp-action="Details" asp-route-id="@order.Id">@order.SupplierName</a>
+                            <partial name="_StatusBadge" model="@order.Status.ToString()" />
+                        </div>
+                    </div>
+                    <div class="steps">
+                        @for (var i = 0; i < stepLabels.Length; i++)
+                        {
+                            <span class="step @(i <= at ? "done" : "") @(i == at ? "current" : "")">@stepLabels[i]</span>
+                        }
+                    </div>
+                </article>
+            }
+            else
+            {
+                <article class="need-card is-open">
+                    <div class="need-row">
+                        <div class="with-tile">
+                            <span class="tile need-tile is-open">@(name[..1])</span>
+                            <div><span class="need-title">@name</span><span class="need-notes">@(r.Notes is null ? "Not ordered yet" : r.Notes + " · Not ordered yet")</span></div>
+                        </div>
+                        @if (Model.IsOpen)
+                        {
+                            <div class="page-actions">
+                                <form asp-action="RemoveRequirement" asp-route-id="@Model.Id" asp-route-requirementId="@r.Id" method="post"><button class="btn btn-sm btn-outline-secondary">Remove</button></form>
+                                <a class="btn btn-sm btn-primary" asp-controller="Orders" asp-action="Suppliers" asp-route-eventId="@Model.Id" asp-route-category="@r.Category"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>Find a supplier</a>
+                            </div>
+                        }
+                    </div>
+                </article>
+            }
+        }
+    </section>
+
+    @if (Model.IsOpen && missing.Any())
+    {
+        <aside class="split-side">
+            <form asp-action="AddRequirement" asp-route-id="@Model.Id" method="post" class="panel panel-body mb-0">
+                <h2 class="panel-title mb-3">Add a need</h2>
+                <div class="mb-3">
+                    <label for="need-category" class="form-label">Category</label>
+                    <select id="need-category" name="Category" class="form-select">
+                        @foreach (var c in missing) { <option value="@c">@SupplyCategories.DisplayName(c)</option> }
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="need-notes" class="form-label">Notes</label>
+                    <input id="need-notes" name="Notes" class="form-control" placeholder="Optional" />
+                </div>
+                <button class="btn btn-soft w-100">Add need</button>
+            </form>
+        </aside>
+    }
+</div>
+
+<div class="section-head mt-4">
+    <h2>Tickets for clients</h2>
+    <span class="text-muted small">@Model.TicketTypes.Sum(t => t.Sold) sold &middot; $@Model.TicketTypes.Sum(t => t.Sold * t.Price).ToString("N2") revenue</span>
+</div>
+<section class="panel mt-3">
+    <div class="panel-head">
+        <div>
+            <h3 class="panel-title">@(Model.IsPublished ? "On sale" : "Not published")</h3>
+            <span class="panel-note">@(Model.IsPublished ? "Clients can find this event and buy tickets." : "Add ticket types, then publish so clients can see the event.")</span>
+        </div>
+        @if (Model.IsOpen)
+        {
+            <div class="page-actions">
+                @if (Model.IsPublished)
+                {
+                    <a class="btn btn-sm btn-outline-secondary" asp-controller="Discover" asp-action="Details" asp-route-id="@Model.Id">View public page</a>
+                    <form asp-action="Unpublish" asp-route-id="@Model.Id" method="post"><button class="btn btn-sm btn-outline-secondary">Unpublish</button></form>
+                }
+                else
+                {
+                    <form asp-action="Publish" asp-route-id="@Model.Id" method="post"><button class="btn btn-sm btn-primary">Publish event</button></form>
+                }
+            </div>
+        }
+    </div>
+    @if (!Model.TicketTypes.Any())
+    {
+        <div class="empty-state"><strong>No ticket types yet</strong>Add a type such as Standard or VIP below.</div>
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table class="table">
+                <thead><tr><th>Type</th><th class="num">Price</th><th class="num">Sold</th><th class="num">Left</th><th></th></tr></thead>
+                <tbody>
+                @foreach (var t in Model.TicketTypes.OrderBy(t => t.Price))
+                {
+                    <tr>
+                        <td><span class="cell-title">@t.Name</span>@if (!string.IsNullOrWhiteSpace(t.Description)) { <span class="cell-sub">@t.Description</span> }</td>
+                        <td class="num">@(t.Price == 0 ? "Free" : "$" + t.Price.ToString("0.##"))</td>
+                        <td class="num">@t.Sold / @t.Quantity</td>
+                        <td class="num">@t.Remaining</td>
+                        <td class="num">
+                            @if (Model.IsOpen && t.Sold == 0)
+                            {
+                                <form asp-action="RemoveTicketType" asp-route-id="@Model.Id" asp-route-ticketTypeId="@t.Id" method="post"><button class="btn btn-sm btn-outline-secondary">Remove</button></form>
+                            }
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+    @if (Model.IsOpen)
+    {
+        <form asp-action="AddTicketType" asp-route-id="@Model.Id" method="post" class="panel-body row g-2 align-items-end border-top">
+            <div class="col-md-3"><label class="form-label" for="tt-name">Name</label><input id="tt-name" name="Name" class="form-control" placeholder="VIP" required /></div>
+            <div class="col-md-3"><label class="form-label" for="tt-desc">Description</label><input id="tt-desc" name="Description" class="form-control" placeholder="Optional" /></div>
+            <div class="col-md-2"><label class="form-label" for="tt-price">Price ($)</label><input id="tt-price" name="Price" type="number" min="0" step="0.01" value="25" class="form-control" /></div>
+            <div class="col-md-2"><label class="form-label" for="tt-qty">Quantity</label><input id="tt-qty" name="Quantity" type="number" min="1" value="100" class="form-control" /></div>
+            <div class="col-md-2"><button class="btn btn-soft w-100">Add type</button></div>
+        </form>
+    }
+</section>

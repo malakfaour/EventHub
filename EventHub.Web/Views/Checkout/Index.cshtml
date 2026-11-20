@@ -1,0 +1,56 @@
+@model EventHub.Web.ViewModels.CheckoutViewModel
+@{
+    ViewData["Title"] = "Checkout";
+    var ev = (EventHub.Web.Models.Event)ViewBag.Event;
+    var type = ev.TicketTypes.First(t => t.Id == Model.TicketTypeId);
+    var total = type.Price * Model.Quantity;
+}
+<section class="pub-wrap pub-section">
+    <a class="back-link" asp-controller="Discover" asp-action="Details" asp-route-id="@ev.Id"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>Back to the event</a>
+    <h1 class="page-title mb-4">Checkout</h1>
+
+    <div class="checkout-grid">
+        <div class="panel checkout-summary">
+            <div class="mini-cover @EventTypes.Css(ev.EventType)"><span class="cover-icon">@EventTypes.Icon(ev.EventType)</span></div>
+            <div class="panel-body">
+                <span class="type-pill">@ev.EventType</span>
+                <h2 class="h4 mt-2">@ev.Name</h2>
+                <p class="text-muted mb-3">@ev.StartsAtUtc.ToString("ddd d MMM yyyy · HH:mm") UTC<br />@ev.Venue</p>
+                <div class="sum-row"><span>@Model.Quantity &times; @type.Name</span><span>@(type.Price == 0 ? "Free" : "$" + (type.Price * Model.Quantity).ToString("N2"))</span></div>
+                <div class="sum-row sum-total"><span>Total</span><span>@(total == 0 ? "Free" : "$" + total.ToString("N2"))</span></div>
+            </div>
+        </div>
+
+        <form asp-action="Pay" method="post" class="panel panel-body checkout-form" autocomplete="on">
+            <h2 class="panel-title mb-3">@(total == 0 ? "Confirm your tickets" : "Payment details")</h2>
+            <div asp-validation-summary="All" class="text-danger"></div>
+            <input type="hidden" asp-for="EventId" />
+            <input type="hidden" asp-for="TicketTypeId" />
+            <input type="hidden" asp-for="Quantity" />
+            @if (total == 0)
+            {
+                <input type="hidden" asp-for="CardHolder" />
+                <input type="hidden" name="CardNumber" value="0000000000000" />
+                <input type="hidden" name="Expiry" value="12/99" />
+                <input type="hidden" name="Cvv" value="000" />
+                <p class="text-muted">These tickets are free. No payment is needed.</p>
+                <button class="btn btn-primary btn-lg w-100">Get my tickets</button>
+            }
+            else
+            {
+                <div class="mb-3"><label asp-for="CardHolder" class="form-label"></label><input asp-for="CardHolder" class="form-control" autocomplete="cc-name" /></div>
+                <div class="mb-3"><label asp-for="CardNumber" class="form-label"></label><input asp-for="CardNumber" class="form-control" inputmode="numeric" autocomplete="cc-number" placeholder="4242 4242 4242 4242" /></div>
+                <div class="row g-3 mb-3">
+                    <div class="col-6"><label asp-for="Expiry" class="form-label"></label><input asp-for="Expiry" class="form-control" autocomplete="cc-exp" placeholder="12/28" /></div>
+                    <div class="col-6"><label asp-for="Cvv" class="form-label"></label><input asp-for="Cvv" class="form-control" inputmode="numeric" autocomplete="cc-csc" placeholder="123" /></div>
+                </div>
+                <button class="btn btn-primary btn-lg w-100">Pay $@total.ToString("N2")</button>
+                <div class="demo-note">
+                    <b>Demo payment gateway.</b> Nothing is charged. Use any valid-looking card number.
+                    A card ending in <code>0000</code> is declined, and <code>9999</code> has insufficient funds.
+                </div>
+            }
+        </form>
+    </div>
+</section>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

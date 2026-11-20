@@ -22,7 +22,7 @@ public sealed class RabbitMqPublisher : IMessagePublisher, IAsyncDisposable
 
     public Task PublishAsync<T>(T message, CancellationToken ct = default) where T : MessageBase
     {
-        var route = MessageRoutes.For<T>();
+        var route = MessageRoutes.For(message);
         return PublishRawAsync(route.Exchange, route.RoutingKey, typeof(T).Name,
             message.MessageId, message.CorrelationId, MessageSerializer.Serialize(message), ct);
     }

@@ -7,22 +7,15 @@ public static class MessageRoutes
 {
     private static readonly Dictionary<Type, MessageRoute> Map = new()
     {
-        [typeof(EventSubmitted)] = new(Topology.ClientExchange, Topology.Keys.EventSubmitted),
-        [typeof(EventUpdated)] = new(Topology.ClientExchange, Topology.Keys.EventUpdated),
-        [typeof(EventCancelled)] = new(Topology.ClientExchange, Topology.Keys.EventCancelled),
-        [typeof(EventReported)] = new(Topology.ClientExchange, Topology.Keys.EventReported),
-        [typeof(RsvpCreated)] = new(Topology.ClientExchange, Topology.Keys.RsvpCreated),
-        [typeof(RsvpCancelled)] = new(Topology.ClientExchange, Topology.Keys.RsvpCancelled),
-        [typeof(CommentPosted)] = new(Topology.ClientExchange, Topology.Keys.CommentPosted),
-        [typeof(UserRegistered)] = new(Topology.ClientExchange, Topology.Keys.UserRegistered),
-        [typeof(PaymentCompleted)] = new(Topology.ClientExchange, Topology.Keys.PaymentCompleted),
+        [typeof(SupplyOrderPlaced)] = new(Topology.EventHubExchange, Topology.Keys.OrderPlaced),
+        [typeof(OrderCancelled)] = new(Topology.EventHubExchange, Topology.Keys.OrderCancelled),
+        [typeof(PaymentCompleted)] = new(Topology.EventHubExchange, Topology.Keys.PaymentCompleted),
 
-        [typeof(EventApproved)] = new(Topology.AdminExchange, Topology.Keys.EventApproved),
-        [typeof(EventRejected)] = new(Topology.AdminExchange, Topology.Keys.EventRejected),
-        [typeof(ReportResolved)] = new(Topology.AdminExchange, Topology.Keys.ReportResolved),
-        [typeof(UserBanned)] = new(Topology.AdminExchange, Topology.Keys.UserBanned),
-        [typeof(UserUnbanned)] = new(Topology.AdminExchange, Topology.Keys.UserUnbanned),
-        [typeof(CategoryChanged)] = new(Topology.AdminExchange, Topology.Keys.CategoryChanged),
+        [typeof(OrderStatusChanged)] = new(Topology.SupplierExchange, Topology.Keys.OrderStatusChanged),
+        [typeof(OrderRejected)] = new(Topology.SupplierExchange, Topology.Keys.OrderRejected),
+        [typeof(InvoiceIssued)] = new(Topology.SupplierExchange, Topology.Keys.InvoiceIssued),
+        [typeof(CatalogPublished)] = new(Topology.SupplierExchange, Topology.Keys.CatalogPublished),
+        [typeof(ItemAvailabilityChanged)] = new(Topology.SupplierExchange, Topology.Keys.ItemAvailabilityChanged),
     };
 
     public static MessageRoute For<T>() where T : MessageBase => For(typeof(T));
@@ -31,6 +24,18 @@ public static class MessageRoutes
         Map.TryGetValue(type, out var route)
             ? route
             : throw new InvalidOperationException($"No route registered for message type {type.Name}.");
+
+    /// <summary>
+    /// Route for one concrete message. Order messages append their category to the routing key
+    /// (order.placed.catering), so each category's orders land in that supplier queue.
+    /// </summary>
+    public static MessageRoute For(MessageBase message)
+    {
+        var route = For(message.GetType());
+        return message is ICategorized categorized
+            ? route with { RoutingKey = $"{route.RoutingKey}.{categorized.Category}" }
+            : route;
+    }
 
     /// <summary>Finds a message type by its short name (used by the outbox, which stores the name as text).</summary>
     public static Type? Resolve(string typeName) => Map.Keys.FirstOrDefault(t => t.Name == typeName);

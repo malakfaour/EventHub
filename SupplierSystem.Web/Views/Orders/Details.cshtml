@@ -1,0 +1,117 @@
+@using Microsoft.AspNetCore.Authorization
+@model SupplierSystem.Web.Models.SupplyOrder
+@{
+    ViewData["Title"] = "Order";
+    var canProcess = (await AuthorizationService.AuthorizeAsync(User, "CanProcessOrders")).Succeeded;
+    string[] stepLabels = { "Received", "Accepted", "Preparing", "Dispatched", "Delivered" };
+    var at = Model.Status switch
+    {
+        SupplyOrderStatus.Accepted => 1, SupplyOrderStatus.Preparing => 2, SupplyOrderStatus.Dispatched => 3, SupplyOrderStatus.Delivered => 4, _ => 0
+    };
+    var stopped = Model.Status is SupplyOrderStatus.Rejected or SupplyOrderStatus.Cancelled;
+}
+@inject Microsoft.AspNetCore.Authorization.IAuthorizationService AuthorizationService
+<a class="back-link" asp-action="Index"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>Orders</a>
+<div class="page-header">
+    <div>
+        <div class="crumbs">Order for <b>@Model.Supplier?.Name</b></div>
+        <h1 class="page-title">@Model.EventName <partial name="_StatusBadge" model="Model.Status" /></h1>
+    </div>
+</div>
+
+<section class="panel panel-body">
+    <div class="steps @(stopped ? "is-stopped" : "")">
+        @for (var i = 0; i < stepLabels.Length; i++)
+        {
+            <span class="step @(i <= at ? "done" : "") @(i == at ? "current" : "")">@stepLabels[i]</span>
+        }
+    </div>
+
+    @if (canProcess && !stopped && Model.Status != SupplyOrderStatus.Delivered)
+    {
+        <div class="d-flex flex-wrap gap-2 align-items-start mt-4">
+        @if (Model.Status == SupplyOrderStatus.Received)
+        {
+            <form asp-action="Accept" asp-route-id="@Model.Id" method="post"><button class="btn btn-success">Accept order</button></form>
+            <form asp-action="Reject" asp-route-id="@Model.Id" method="post" class="d-flex flex-wrap gap-2">
+                <select name="reasonCode" class="form-select w-auto" aria-label="Reason">
+                    <option value="OutOfStock">Out of stock</option>
+                    <option value="CannotDeliver">Cannot deliver at that time</option>
+                    <option value="Other">Other</option>
+                </select>
+                <input name="reasonText" class="form-control w-auto" placeholder="Note (optional)" aria-label="Note" />
+                <button class="btn btn-outline-danger">Reject</button>
+            </form>
+        }
+        else if (Model.Status == SupplyOrderStatus.Accepted)
+        {
+            <form asp-action="Advance" asp-route-id="@Model.Id" method="post"><input type="hidden" name="next" value="Preparing" /><button class="btn btn-primary">Start preparing</button></form>
+        }
+        else if (Model.Status == SupplyOrderStatus.Preparing)
+        {
+            <form asp-action="Advance" asp-route-id="@Model.Id" method="post"><input type="hidden" name="next" value="Dispatched" /><button class="btn btn-primary">Dispatch</button></form>
+        }
+        else if (Model.Status == SupplyOrderStatus.Dispatched)
+        {
+            <form asp-action="Advance" asp-route-id="@Model.Id" method="post"><input type="hidden" name="next" value="Delivered" /><button class="btn btn-success">Mark delivered</button></form>
+        }
+        </div>
+    }
+</section>
+
+<div class="split">
+    <section class="split-main">
+        <div class="panel mb-0">
+            <div class="panel-head"><h2>Items</h2></div>
+            <div class="table-wrap">
+            <table class="table">
+                <thead><tr><th>Item</th><th>Unit</th><th class="num">Qty</th><th class="num">Price</th><th class="num">Total</th></tr></thead>
+                <tbody>
+                @foreach (var l in Model.Lines)
+                {
+                    <tr><td class="cell-title">@l.Name</td><td class="text-muted">@l.Unit</td><td class="num">@l.Quantity</td><td class="num">@l.UnitPrice.ToString("N2")</td><td class="num">@l.LineTotal.ToString("N2")</td></tr>
+                }
+                </tbody>
+                <tfoot><tr><th colspan="4" class="text-end">Total</th><th class="num">@Model.Total.ToString("N2")</th></tr></tfoot>
+            </table>
+            </div>
+        </div>
+        @{ var invoice = ViewBag.Invoice as SupplierSystem.Web.Models.Invoice; }
+        @if (Model.Status == SupplyOrderStatus.Delivered)
+        {
+            <div class="panel panel-body mt-4 mb-0">
+                <h2 class="panel-title mb-3">Invoice</h2>
+                @if (invoice is null)
+                {
+                    <p class="text-muted">This order is delivered and has not been invoiced yet.</p>
+                    @if (canProcess)
+                    {
+                        <form asp-controller="Invoices" asp-action="Issue" method="post"><input type="hidden" name="orderId" value="@Model.Id" /><button class="btn btn-primary">Issue invoice (@Model.Total.ToString("N2"))</button></form>
+                    }
+                }
+                else
+                {
+                    <dl class="meta-list" style="grid-template-columns: 100px 1fr">
+                        <dt>Number</dt><dd>@invoice.Number</dd>
+                        <dt>Amount</dt><dd>@invoice.Amount.ToString("N2") @invoice.Currency</dd>
+                        <dt>Due</dt><dd>@invoice.DueAtUtc.ToString("yyyy-MM-dd")</dd>
+                        <dt>Status</dt><dd>@if (invoice.Status == SupplierSystem.Web.Models.InvoiceStatus.Paid) { <span class="status status-green">Paid</span> } else if (invoice.IsOverdue) { <span class="status status-red">Overdue</span> } else { <span class="status status-amber">Awaiting payment</span> }</dd>
+                        @if (invoice.PaidAtUtc is not null) { <dt>Paid</dt><dd>@invoice.PaidAtUtc.Value.ToString("yyyy-MM-dd HH:mm") UTC<span class="cell-sub">@invoice.PaymentReference</span></dd> }
+                    </dl>
+                }
+            </div>
+        }
+    </section>
+    <aside class="split-side">
+        <div class="panel panel-body mb-0">
+            <h2 class="panel-title mb-3">Details</h2>
+            <dl class="meta-list" style="grid-template-columns: 100px 1fr">
+                <dt>Organizer</dt><dd>@Model.Customer?.Name<span class="cell-sub">@Model.Customer?.Email</span></dd>
+                <dt>Deliver to</dt><dd>@Model.DeliveryAddress</dd>
+                <dt>When</dt><dd>@Model.DeliveryAtUtc.ToString("yyyy-MM-dd HH:mm") UTC</dd>
+                <dt>Notes</dt><dd>@(Model.Notes ?? "-")</dd>
+                @if (Model.DecisionNote is not null) { <dt>Decision</dt><dd>@Model.DecisionNote</dd> }
+            </dl>
+        </div>
+    </aside>
+</div>

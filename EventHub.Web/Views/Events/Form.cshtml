@@ -1,0 +1,54 @@
+@model EventHub.Web.ViewModels.EventFormViewModel
+@{
+    var editing = ViewBag.EventId is Guid;
+    ViewData["Title"] = editing ? "Edit event" : "New event";
+}
+<a class="back-link" asp-action="Index"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>My events</a>
+<div class="page-header">
+    <div>
+        <h1 class="page-title">@ViewData["Title"]</h1>
+        <p class="page-sub">@(editing ? "Update the details of your event." : "Start with the basics. You can add what the event needs next.")</p>
+    </div>
+</div>
+<section class="panel form-narrow">
+    <form method="post" class="panel-body">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <div class="mb-3"><label asp-for="Name" class="form-label"></label><input asp-for="Name" class="form-control" /><span asp-validation-for="Name" class="text-danger"></span></div>
+        <div class="mb-3"><label asp-for="Description" class="form-label"></label><textarea asp-for="Description" class="form-control" rows="3"></textarea></div>
+        <div class="mb-3"><label asp-for="Venue" class="form-label"></label><input asp-for="Venue" class="form-control" /><span asp-validation-for="Venue" class="text-danger"></span></div>
+        <div class="mb-3">
+            <label asp-for="EventType" class="form-label"></label>
+            <select asp-for="EventType" class="form-select" asp-items="@(EventTypes.All.Select(t => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem(t, t)))"></select>
+        </div>
+        <div class="mb-3">
+            <label asp-for="ImageUrl" class="form-label"></label>
+            <input asp-for="ImageUrl" class="form-control" placeholder="https://..." />
+            <span asp-validation-for="ImageUrl" class="text-danger"></span>
+        </div>
+        <div class="row g-3 mb-3">
+            <div class="col-md-7"><label asp-for="StartsAtUtc" class="form-label"></label><input asp-for="StartsAtUtc" type="datetime-local" class="form-control" /></div>
+            <div class="col-md-5"><label asp-for="ExpectedGuests" class="form-label"></label><input asp-for="ExpectedGuests" class="form-control" /><span asp-validation-for="ExpectedGuests" class="text-danger"></span></div>
+        </div>
+        @if (ViewBag.EventId is not Guid)
+        {
+            <div class="mb-3">
+                <label class="form-label">What does this event need?</label>
+                <div class="d-flex flex-wrap gap-3">
+                    @foreach (var c in SupplyCategories.All)
+                    {
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="Needs" value="@c" id="need-@c" @(Model.Needs.Contains(c) ? "checked" : "") />
+                            <label class="form-check-label" for="need-@c">@SupplyCategories.DisplayName(c)</label>
+                        </div>
+                    }
+                </div>
+                <div class="form-text">You can change this later on the event page.</div>
+            </div>
+        }
+        <div class="form-actions">
+            <button class="btn btn-primary">Save event</button>
+            <a class="btn btn-link" asp-action="Index">Cancel</a>
+        </div>
+    </form>
+</section>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

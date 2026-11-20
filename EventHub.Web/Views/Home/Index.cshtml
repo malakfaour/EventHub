@@ -1,0 +1,14 @@
+@{ ViewData["Title"] = "Welcome"; }
+<h1>Welcome to Event Hub</h1>
+<p class="auth-sub">Plan your event, list what it needs, and order catering, decoration and sound from specialized suppliers.</p>
+@if (User.Identity?.IsAuthenticated == true)
+{
+    <a asp-controller="Events" asp-action="Index" class="btn btn-primary">Go to my events</a>
+}
+else
+{
+    <div class="d-grid gap-2">
+        <a asp-controller="Account" asp-action="Register" class="btn btn-primary">Create an account</a>
+        <a asp-controller="Account" asp-action="Login" class="btn btn-outline-primary">Log in</a>
+    </div>
+}

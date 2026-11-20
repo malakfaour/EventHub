@@ -64,7 +64,9 @@ public sealed class OutboxPublisher : BackgroundService
             {
                 var type = MessageRoutes.Resolve(item.Type)
                            ?? throw new InvalidOperationException($"Unknown outbox message type '{item.Type}'.");
-                var route = MessageRoutes.For(type);
+                var message = MessageSerializer.Deserialize(item.Payload, type) as MessageBase
+                              ?? throw new InvalidOperationException($"Outbox payload {item.Id} could not be read.");
+                var route = MessageRoutes.For(message);
 
                 await _publisher.PublishRawAsync(route.Exchange, route.RoutingKey, item.Type, item.Id,
                     item.CorrelationId, Encoding.UTF8.GetBytes(item.Payload), ct);

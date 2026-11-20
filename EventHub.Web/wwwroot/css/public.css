@@ -1,0 +1,269 @@
+/* ==========================================================================
+   Public / client side of the Event Hub: discover, event page, checkout, tickets.
+   Loaded only by _PublicLayout. Uses the tokens from theme.css.
+   ========================================================================== */
+
+body.public { background: #fff; }
+.pub-wrap { max-width: 1160px; margin: 0 auto; padding: 0 24px; box-sizing: border-box; }
+.pub-section { padding-top: 32px; padding-bottom: 64px; }
+
+/* ---- Top bar: see "Top navigation bar" at the end of this file ---- */
+.pub-brand-name { color: var(--text); }
+.pub-footer { border-top: 1px solid var(--border); padding: 28px 0; color: var(--muted); font-size: 14px; }
+
+/* ---- Hero ---- */
+.pub-hero { position: relative; overflow: hidden; background: var(--brand-dark); color: #fff; padding: 84px 0 96px; }
+.pub-hero::after { content: ""; position: absolute; width: 360px; height: 360px; border-radius: 50%; border: 2px solid rgba(255,255,255,.14); right: 6%; bottom: -160px; }
+.pub-hero .pub-wrap { position: relative; z-index: 1; }
+.hero-kicker { display: inline-block; padding: 6px 14px; border-radius: 999px; background: rgba(255,255,255,.12); font-size: 13px; font-weight: 600; letter-spacing: .02em; }
+.pub-hero h1 { font-size: clamp(38px, 6vw, 68px); line-height: 1.02; margin: 18px 0 16px; letter-spacing: -0.03em; color: #fff; }
+.hero-accent { background: linear-gradient(90deg, #C4B5FD, #93C5FD); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.pub-hero p { font-size: 18px; max-width: 560px; color: #D6DAEA; margin: 0 0 28px; }
+.hero-search { display: flex; align-items: center; gap: 10px; background: #fff; border-radius: 999px; padding: 8px 8px 8px 20px; max-width: 620px; box-shadow: 0 20px 50px rgba(0,0,0,.35); }
+.hero-search svg { width: 20px; height: 20px; color: var(--muted); flex: none; }
+.hero-search input { flex: 1; min-width: 0; border: 0; outline: 0; font-size: 16px; background: transparent; color: var(--text); }
+.hero-search .btn { border-radius: 999px; padding-left: 26px; padding-right: 26px; }
+
+/* ---- Category chips ---- */
+.type-chips { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 28px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 9px 16px; border-radius: 999px; border: 1px solid var(--border); background: #fff; color: var(--text); font-weight: 600; font-size: 14px; text-decoration: none; transition: .15s; }
+.chip:hover { border-color: var(--accent); color: var(--accent-ink); transform: translateY(-1px); }
+.chip.active { background: var(--text); border-color: var(--text); color: #fff; }
+
+/* ---- Cover gradients (one per event type) ---- */
+.cover-music      { background: linear-gradient(135deg, #7C3AED, #EC4899); }
+.cover-conference { background: linear-gradient(135deg, #0EA5E9, #4F46E5); }
+.cover-party      { background: linear-gradient(135deg, #F97316, #EF4444); }
+.cover-wedding    { background: linear-gradient(135deg, #F472B6, #FBBF24); }
+.cover-food       { background: linear-gradient(135deg, #16A34A, #F59E0B); }
+.cover-sports     { background: linear-gradient(135deg, #0D9488, #2563EB); }
+.cover-other      { background: linear-gradient(135deg, #475569, #7C3AED); }
+.event-cover, .detail-cover, .mini-cover, .purchase-cover { background-size: cover; background-position: center; }
+.cover-icon { font-size: 56px; filter: drop-shadow(0 6px 12px rgba(0,0,0,.25)); line-height: 1; }
+.cover-icon-xl { font-size: 120px; position: absolute; right: 48px; top: 40px; opacity: .9; }
+
+/* ---- Event cards ---- */
+.event-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px; }
+.event-card { display: flex; flex-direction: column; background: #fff; border: 1px solid var(--border); border-radius: 22px; overflow: hidden; text-decoration: none; color: var(--text); transition: transform .18s, box-shadow .18s; }
+.event-card:hover { transform: translateY(-6px); box-shadow: 0 22px 44px rgba(15,18,34,.14); color: var(--text); }
+.event-cover { position: relative; height: 170px; display: flex; align-items: center; justify-content: center; }
+.event-card:hover .cover-icon { transform: scale(1.12) rotate(-4deg); }
+.cover-icon { transition: transform .25s; }
+.date-chip { position: absolute; top: 14px; left: 14px; background: #fff; border-radius: 12px; padding: 6px 10px; text-align: center; line-height: 1.1; box-shadow: 0 6px 14px rgba(0,0,0,.18); color: var(--text); }
+.date-chip small { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--accent); }
+.date-chip b { font-family: var(--font-head); font-size: 20px; }
+.cover-flag { position: absolute; top: 14px; right: 14px; padding: 5px 12px; border-radius: 999px; font-size: 12px; font-weight: 700; color: #fff; }
+.cover-flag.is-sold { background: #111827; }
+.cover-flag.is-few { background: #DC2626; }
+.event-body { padding: 18px 20px 20px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+.event-body h3 { margin: 0; font-size: 20px; line-height: 1.2; }
+.event-meta { margin: 0; color: var(--muted); font-size: 14px; }
+.type-pill { align-self: flex-start; display: inline-block; padding: 3px 10px; border-radius: 999px; background: var(--accent-tint); color: var(--accent-ink); font-size: 12px; font-weight: 700; }
+.type-pill-light { background: rgba(255,255,255,.22); color: #fff; backdrop-filter: blur(4px); }
+.event-foot { margin-top: auto; padding-top: 12px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--row-border); }
+.event-price { font-family: var(--font-head); font-weight: 700; font-size: 18px; }
+.event-go { color: var(--accent); font-weight: 700; font-size: 14px; }
+
+/* ---- Event page ---- */
+.detail-cover { position: relative; min-height: 300px; border-radius: 28px; overflow: hidden; margin: 8px 0 32px; display: flex; align-items: flex-end; }
+.detail-cover::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 35%, rgba(0,0,0,.55)); }
+.detail-cover-text { position: relative; z-index: 1; padding: 32px; color: #fff; }
+.detail-cover-text h1 { color: #fff; font-size: clamp(30px, 5vw, 52px); margin: 12px 0 0; letter-spacing: -0.02em; }
+.detail-grid { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 40px; align-items: start; }
+@media (max-width: 991.98px) { .detail-grid { grid-template-columns: 1fr; } .cover-icon-xl { font-size: 72px; right: 24px; top: 24px; } }
+.fact-row { display: flex; flex-wrap: wrap; gap: 14px; }
+.fact { display: flex; align-items: center; gap: 12px; padding: 14px 18px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface-2); }
+.fact-icon { font-size: 24px; }
+.fact small { display: block; color: var(--muted); font-size: 12px; }
+.fact b { font-size: 15px; }
+.detail-text { font-size: 17px; line-height: 1.7; color: #374151; white-space: pre-line; }
+
+.ticket-box { position: sticky; top: 92px; border: 1px solid var(--border); border-radius: 24px; padding: 24px; background: #fff; box-shadow: 0 18px 40px rgba(15,18,34,.08); }
+.ticket-box h2 { font-size: 22px; margin: 0 0 16px; }
+.ticket-options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+.ticket-option { position: relative; display: flex; align-items: center; gap: 12px; padding: 14px 16px; border: 2px solid var(--border); border-radius: 16px; cursor: pointer; transition: .15s; }
+.ticket-option:hover { border-color: #A5B4FC; }
+.ticket-option input { accent-color: var(--accent); width: 18px; height: 18px; flex: none; }
+.ticket-option:has(input:checked) { border-color: var(--indigo); background: var(--brand-grad-soft); }
+.ticket-option.is-off { opacity: .5; cursor: not-allowed; }
+.ticket-option-main { flex: 1; display: flex; flex-direction: column; }
+.ticket-option-main small { color: var(--muted); font-size: 12px; }
+.ticket-option-main .text-few { color: #DC2626; font-weight: 600; }
+.ticket-option-price { font-family: var(--font-head); font-weight: 700; font-size: 18px; }
+.qty-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.qty-row .form-select { width: 100px; }
+.total-row { display: flex; justify-content: space-between; align-items: baseline; padding: 14px 0; margin-bottom: 14px; border-top: 1px dashed var(--border); font-size: 16px; }
+.total-row b { font-family: var(--font-head); font-size: 28px; }
+.ticket-note { text-align: center; font-size: 13px; color: var(--muted); margin: 12px 0 0; }
+.sold-out-box { padding: 16px; border-radius: 14px; background: #F1F5F9; color: #475569; text-align: center; font-weight: 600; }
+.btn-lg { --bs-btn-padding-y: 14px; --bs-btn-font-size: 16px; border-radius: 14px; }
+
+/* ---- Checkout ---- */
+.checkout-grid { display: grid; grid-template-columns: 380px minmax(0, 1fr); gap: 28px; align-items: start; }
+@media (max-width: 991.98px) { .checkout-grid { grid-template-columns: 1fr; } }
+.mini-cover { height: 120px; display: flex; align-items: center; justify-content: center; }
+.sum-row { display: flex; justify-content: space-between; padding: 10px 0; border-top: 1px solid var(--row-border); }
+.sum-total { font-family: var(--font-head); font-weight: 700; font-size: 20px; }
+.checkout-form { margin-bottom: 24px; }
+.demo-note { margin-top: 16px; padding: 12px 14px; border-radius: 12px; background: #FEF3C7; color: #92400E; font-size: 13px; }
+
+/* ---- My tickets: list (each purchase looks like a ticket stub) ---- */
+.wallet-head { display: flex; flex-wrap: wrap; gap: 16px; justify-content: space-between; align-items: flex-end; margin-bottom: 28px; }
+.wallet-count { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; background: var(--accent-tint); color: var(--accent-ink); font-weight: 700; font-size: 14px; }
+.purchase-list { display: flex; flex-direction: column; gap: 16px; filter: drop-shadow(0 6px 14px rgba(15,18,34,.07)); }
+.purchase-card {
+  --notch: 14px;
+  position: relative; display: flex; align-items: stretch; text-decoration: none; color: var(--text); background: #fff;
+  border: 1px solid var(--border); border-radius: 20px; transition: transform .18s, box-shadow .18s;
+  -webkit-mask: radial-gradient(circle var(--notch) at calc(100% - 170px) 0, #0000 98%, #000) top / 100% 51% no-repeat,
+                radial-gradient(circle var(--notch) at calc(100% - 170px) 100%, #0000 98%, #000) bottom / 100% 51% no-repeat;
+          mask: radial-gradient(circle var(--notch) at calc(100% - 170px) 0, #0000 98%, #000) top / 100% 51% no-repeat,
+                radial-gradient(circle var(--notch) at calc(100% - 170px) 100%, #0000 98%, #000) bottom / 100% 51% no-repeat;
+}
+.purchase-card:hover { transform: translateY(-3px); border-color: #CBD1DC; color: var(--text); }
+.purchase-cover { width: 96px; flex: none; display: flex; align-items: center; justify-content: center; border-radius: 19px 0 0 19px; }
+.purchase-cover .cover-icon { font-size: 38px; }
+.purchase-main { flex: 1; min-width: 0; padding: 18px 20px; display: flex; flex-direction: column; gap: 3px; }
+.purchase-main b { font-family: var(--font-head); font-size: 19px; }
+.purchase-main small { color: var(--muted); font-size: 13px; }
+.purchase-when { align-self: flex-start; margin-top: 6px; }
+.purchase-side { width: 170px; flex: none; box-sizing: border-box; padding: 18px 20px; border-left: 2px dashed var(--border); display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: 8px; text-align: right; }
+.purchase-side .purchase-total { font-family: var(--font-head); font-size: 20px; }
+.purchase-side .purchase-qty { font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
+.purchase-card.is-past { opacity: .72; }
+@media (max-width: 640px) {
+  .purchase-card { flex-wrap: wrap; -webkit-mask: none; mask: none; }
+  .purchase-cover { width: 72px; }
+  .purchase-side { width: 100%; border-left: 0; border-top: 2px dashed var(--border); flex-direction: row; justify-content: space-between; align-items: center; }
+}
+
+/* Countdown chip (list + ticket) */
+.when-chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; background: var(--accent-tint); color: var(--accent-ink); }
+.when-chip::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.when-chip.is-today { background: #DCFCE7; color: #166534; }
+.when-chip.is-today::before { animation: pulse 1.4s ease-in-out infinite; }
+.when-chip.is-past { background: #F1F5F9; color: #475569; }
+.when-chip-light, .ticket-top .when-chip { background: rgba(255,255,255,.2); color: #fff; backdrop-filter: blur(6px); }
+@keyframes pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.8); opacity: .4; } }
+
+/* ---- Ticket page: summary bar ---- */
+.pass-summary { display: flex; flex-wrap: wrap; gap: 12px 28px; align-items: center; padding: 18px 22px; border: 1px solid var(--border); border-radius: 18px; background: var(--canvas); margin-bottom: 32px; }
+.pass-summary div { display: flex; flex-direction: column; }
+.pass-summary small { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; font-weight: 600; }
+.pass-summary b { font-size: 15px; }
+.pass-summary .pass-actions { margin-left: auto; flex-direction: row; gap: 8px; flex-wrap: wrap; }
+
+/* ---- The pass: a holographic ticket that tilts with the pointer ---- */
+/* the shadow sits on the list: the notch mask on each card would cut a box-shadow off */
+.ticket-list { display: flex; flex-direction: column; gap: 36px; perspective: 1400px; filter: drop-shadow(0 22px 26px rgba(15,18,34,.28)); }
+.ticket-card {
+  --mx: 50%; --my: 50%; --rx: 0deg; --ry: 0deg;
+  position: relative; display: flex; border-radius: 26px; background: #fff;
+  transform: rotateX(var(--rx)) rotateY(var(--ry)); transition: transform .25s ease-out;
+  animation: pass-in .6s cubic-bezier(.2,.8,.2,1) backwards; animation-delay: calc(var(--i, 0) * 90ms);
+  -webkit-mask: radial-gradient(circle 16px at calc(100% - 220px) 0, #0000 98%, #000) top / 100% 51% no-repeat,
+                radial-gradient(circle 16px at calc(100% - 220px) 100%, #0000 98%, #000) bottom / 100% 51% no-repeat;
+          mask: radial-gradient(circle 16px at calc(100% - 220px) 0, #0000 98%, #000) top / 100% 51% no-repeat,
+                radial-gradient(circle 16px at calc(100% - 220px) 100%, #0000 98%, #000) bottom / 100% 51% no-repeat;
+}
+.ticket-card.is-tilting { transition: transform .06s linear; }
+@keyframes pass-in { from { opacity: 0; transform: translateY(24px) rotateX(12deg); } to { opacity: 1; transform: none; } }
+
+.ticket-main { position: relative; flex: 1; min-width: 0; padding: 30px 34px 28px 64px; color: #fff; border-radius: 26px 0 0 26px; overflow: hidden; isolation: isolate; }
+/* rings pattern + big faded icon */
+.ticket-main::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; opacity: .35;
+  background:
+    radial-gradient(circle at 110% 120%, transparent 0 90px, rgba(255,255,255,.35) 91px 92px, transparent 93px 140px, rgba(255,255,255,.25) 141px 142px, transparent 143px 200px, rgba(255,255,255,.18) 201px 202px, transparent 203px),
+    repeating-linear-gradient(115deg, rgba(255,255,255,.06) 0 2px, transparent 2px 14px);
+}
+/* holographic sheen that follows the pointer */
+.ticket-main::after {
+  content: ""; position: absolute; inset: 0; z-index: 2; pointer-events: none; mix-blend-mode: overlay; opacity: .55;
+  background:
+    radial-gradient(420px circle at var(--mx) var(--my), rgba(255,255,255,.55), transparent 45%),
+    linear-gradient(115deg, transparent 20%, rgba(255,0,170,.35) 36%, rgba(0,229,255,.35) 46%, rgba(255,230,0,.35) 56%, transparent 72%);
+  background-size: 100% 100%, 250% 250%;
+  background-position: 0 0, var(--mx) var(--my);
+  transition: opacity .3s;
+}
+.ticket-watermark { position: absolute; right: 18px; bottom: -26px; font-size: 150px; line-height: 1; opacity: .16; z-index: -1; transform: rotate(-12deg); pointer-events: none; }
+.ticket-admit { position: absolute; left: 0; top: 0; bottom: 0; width: 44px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,.18); border-right: 1px dashed rgba(255,255,255,.35); }
+.ticket-admit span { writing-mode: vertical-rl; transform: rotate(180deg); font-family: var(--font-head); font-weight: 700; font-size: 12px; letter-spacing: .38em; text-transform: uppercase; white-space: nowrap; }
+.ticket-top { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.ticket-no { margin-left: auto; font-family: var(--font-head); font-weight: 700; font-size: 13px; letter-spacing: .12em; opacity: .9; }
+.ticket-main h2 { color: #fff; font-size: clamp(26px, 3.4vw, 36px); line-height: 1.05; margin: 16px 0 22px; letter-spacing: -0.02em; text-shadow: 0 2px 12px rgba(0,0,0,.18); max-width: 560px; }
+.ticket-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 16px 20px; padding-top: 18px; border-top: 1px solid rgba(255,255,255,.28); }
+.ticket-facts small { display: block; opacity: .82; font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .1em; margin-bottom: 2px; }
+.ticket-facts b { font-size: 15px; }
+.ticket-facts .fact-wide { grid-column: span 2; }
+
+.ticket-stub { position: relative; width: 220px; flex: none; box-sizing: border-box; padding: 26px 20px 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center; border-left: 3px dashed #D5D9E3; border-radius: 0 26px 26px 0; background: #fff; }
+.stub-label { font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.qr-frame { position: relative; padding: 12px; border-radius: 16px; background: #fff; }
+.qr-frame::before { content: ""; position: absolute; inset: 0; border-radius: 16px; padding: 3px;
+  background: conic-gradient(transparent 0 6%, var(--accent) 6% 19%, transparent 19% 31%, var(--accent) 31% 44%, transparent 44% 56%, var(--accent) 56% 69%, transparent 69% 81%, var(--accent) 81% 94%, transparent 94%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; }
+.qr { width: 132px; height: 132px; }
+.qr img, .qr canvas { max-width: 100%; display: block; }
+.ticket-stub code { font-size: 13px; color: var(--text); font-weight: 700; letter-spacing: .08em; background: var(--canvas); padding: 4px 10px; border-radius: 8px; }
+.barcode { width: 100%; height: 28px; opacity: .85; background: repeating-linear-gradient(90deg, #111827 0 2px, transparent 2px 4px, #111827 4px 5px, transparent 5px 8px, #111827 8px 11px, transparent 11px 12px, #111827 12px 13px, transparent 13px 16px); }
+
+/* stamps for used / refunded tickets */
+.ticket-stamp { position: absolute; z-index: 5; left: 38%; top: 50%; transform: translate(-50%, -50%) rotate(-14deg); padding: 8px 22px; border: 4px solid currentColor; border-radius: 12px; font-family: var(--font-head); font-weight: 700; font-size: 34px; letter-spacing: .14em; text-transform: uppercase; background: rgba(255,255,255,.88); pointer-events: none; }
+.ticket-stamp.is-used { color: #166534; }
+.ticket-stamp.is-void { color: #B91C1C; }
+.ticket-card.is-used .ticket-main, .ticket-card.is-void .ticket-main { filter: grayscale(.85) brightness(.9); }
+.ticket-card.is-used .qr-frame, .ticket-card.is-void .qr-frame { opacity: .3; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ticket-card { animation: none; transform: none !important; }
+  .when-chip.is-today::before { animation: none; }
+}
+@media (max-width: 767.98px) {
+  .ticket-card { flex-direction: column; -webkit-mask: none; mask: none; }
+  .ticket-main { border-radius: 26px 26px 0 0; padding: 26px 22px 24px 58px; }
+  .ticket-stub { width: auto; border-left: 0; border-top: 3px dashed #D5D9E3; border-radius: 0 0 26px 26px; }
+  .ticket-facts .fact-wide { grid-column: auto; }
+  .ticket-stamp { left: 50%; top: 30%; font-size: 26px; }
+  .pass-summary .pass-actions { margin-left: 0; }
+}
+@media print {
+  .pub-nav, .pub-footer, .no-print, .alert { display: none !important; }
+  .ticket-list { gap: 18px; perspective: none; filter: none; }
+  .ticket-card { border: 1px solid #ccc; break-inside: avoid; transform: none !important; animation: none; -webkit-mask: none; mask: none; }
+  .ticket-main::after { display: none; }
+  .ticket-main, .ticket-admit, .event-cover, .purchase-cover { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+
+/* ---- Purple -> blue brand on the public side ---- */
+.pub-link.active { background: var(--brand-grad-soft); color: var(--accent-ink); }
+.type-pill:not(.type-pill-light) { background: var(--brand-grad-soft); }
+.wallet-count { background: var(--brand-grad-soft); }
+.qr-frame::before { background: conic-gradient(transparent 0 6%, var(--violet) 6% 19%, transparent 19% 31%, var(--indigo) 31% 44%, transparent 44% 56%, var(--blue) 56% 69%, transparent 69% 81%, var(--indigo) 81% 94%, transparent 94%); }
+.pub-footer { background: var(--brand-grad-soft); }
+
+/* ---- Top navigation bar: white, evenly spaced, never overflows ---- */
+.pub-nav { position: sticky; top: 0; z-index: 20; background: rgba(255, 255, 255, .92); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); box-shadow: 0 1px 0 rgba(15, 18, 34, .02); }
+.pub-nav-inner { display: flex; align-items: center; gap: 32px; min-height: 68px; flex-wrap: nowrap; }
+.pub-nav .brand { flex: none; padding: 0; white-space: nowrap; }
+.pub-links { display: flex; align-items: center; gap: 4px; flex: 1 1 auto; min-width: 0; }
+.pub-link { padding: 8px 14px; border-radius: 999px; color: var(--muted); white-space: nowrap; }
+.pub-link:hover { background: var(--canvas); color: var(--text); }
+.pub-link.active { background: var(--brand-grad-soft); color: var(--accent-ink); }
+.pub-actions { display: flex; align-items: center; gap: 12px; flex: none; margin-left: auto; }
+.pub-actions form { margin: 0; }
+.pub-user { display: inline-flex; align-items: center; gap: 8px; max-width: 220px; min-width: 0; padding: 4px 12px 4px 4px; border: 1px solid var(--border); border-radius: 999px; font-size: 13px; color: var(--text); font-weight: 500; }
+.pub-user .avatar { width: 28px; height: 28px; font-size: 11px; }
+.pub-user-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pub-nav .btn-sm { min-height: 36px; }
+@media (max-width: 991.98px) {
+  .pub-nav-inner { gap: 20px; }
+  .pub-user { padding: 4px; border: 0; }
+  .pub-user-name { display: none; }
+}
+@media (max-width: 640px) {
+  .pub-nav-inner { flex-wrap: wrap; gap: 6px 12px; padding-top: 10px; padding-bottom: 8px; }
+  .pub-links { order: 3; flex: 1 0 100%; overflow-x: auto; margin: 0 -4px; }
+  .pub-user { display: inline-flex; }
+}

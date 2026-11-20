@@ -1,0 +1,63 @@
+@model EventHub.Web.Models.SupplyOrder
+@{ ViewData["Title"] = "Order"; }
+<a class="back-link" asp-controller="Events" asp-action="Details" asp-route-id="@Model.EventId"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>@Model.Event?.Name</a>
+<div class="page-header">
+    <div>
+        <div class="crumbs">Supply order · <b>@SupplyCategories.DisplayName(Model.Category)</b></div>
+        <h1 class="page-title">@Model.SupplierName <partial name="_StatusBadge" model="@Model.Status.ToString()" /></h1>
+    </div>
+    @if (Model.CanBeCancelled)
+    {
+        <div class="page-actions">
+            <form asp-action="Cancel" asp-route-id="@Model.Id" method="post" onsubmit="return confirm('Cancel this order?');"><button class="btn btn-outline-danger">Cancel order</button></form>
+        </div>
+    }
+</div>
+
+<div class="split">
+    <section class="split-main">
+        <div class="panel mb-0">
+            <div class="panel-head"><h2>Items</h2></div>
+            <div class="table-wrap">
+            <table class="table">
+                <thead><tr><th>Item</th><th>Unit</th><th class="num">Qty</th><th class="num">Price</th><th class="num">Total</th></tr></thead>
+                <tbody>
+                @foreach (var i in Model.Items)
+                {
+                    <tr><td class="cell-title">@i.Name</td><td class="text-muted">@i.Unit</td><td class="num">@i.Quantity</td><td class="num">@i.UnitPrice.ToString("N2")</td><td class="num">@i.LineTotal.ToString("N2")</td></tr>
+                }
+                </tbody>
+                <tfoot><tr><th colspan="4" class="text-end">Total</th><th class="num">@Model.Total.ToString("N2")</th></tr></tfoot>
+            </table>
+            </div>
+        </div>
+
+        @{ var invoice = ViewBag.Invoice as Invoice; }
+        @if (invoice is not null)
+        {
+            <div class="panel panel-body mt-4 mb-0">
+                <h2 class="panel-title mb-3">Invoice</h2>
+                <dl class="meta-list" style="grid-template-columns: 110px 1fr">
+                    <dt>Number</dt><dd>@invoice.Number</dd>
+                    <dt>Amount</dt><dd>@invoice.Amount.ToString("N2") @invoice.Currency</dd>
+                    <dt>Due</dt><dd>@invoice.DueAtUtc.ToString("yyyy-MM-dd")</dd>
+                    <dt>Status</dt><dd>@if (invoice.Status == InvoiceStatus.Paid) { <span class="status status-green">Paid</span> } else if (invoice.IsOverdue) { <span class="status status-red">Overdue</span> } else { <span class="status status-amber">Due</span> }</dd>
+                    @if (invoice.PaidAtUtc is not null) { <dt>Paid</dt><dd>@invoice.PaidAtUtc.Value.ToString("yyyy-MM-dd HH:mm") UTC<span class="cell-sub">@invoice.PaymentReference</span></dd> }
+                </dl>
+                @if (invoice.Status == InvoiceStatus.Due) { <a class="btn btn-primary mt-3" asp-controller="Invoices" asp-action="Pay" asp-route-id="@invoice.Id">Pay invoice</a> }
+            </div>
+        }
+    </section>
+    <aside class="split-side">
+        <div class="panel panel-body mb-0">
+            <h2 class="panel-title mb-3">Delivery</h2>
+            <dl class="meta-list" style="grid-template-columns: 110px 1fr">
+                <dt>Deliver to</dt><dd>@Model.DeliveryAddress</dd>
+                <dt>When</dt><dd>@Model.DeliveryAtUtc.ToString("yyyy-MM-dd HH:mm") UTC</dd>
+                <dt>Notes</dt><dd>@(Model.Notes ?? "-")</dd>
+                @if (Model.StatusNote is not null) { <dt>Supplier note</dt><dd>@Model.StatusNote</dd> }
+                <dt>Last update</dt><dd>@Model.UpdatedAtUtc.ToString("yyyy-MM-dd HH:mm") UTC</dd>
+            </dl>
+        </div>
+    </aside>
+</div>

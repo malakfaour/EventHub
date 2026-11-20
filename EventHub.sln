@@ -7,9 +7,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventHub.Contracts", "Event
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventHub.Messaging", "EventHub.Messaging\EventHub.Messaging.csproj", "{85DC1E10-41CB-4CF7-8C4C-C58D326925F5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventHub.Client", "EventHub.Client\EventHub.Client.csproj", "{ADBEDD9D-CB0E-426C-9209-BCEBD81BED29}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventHub.Web", "EventHub.Web\EventHub.Web.csproj", "{ADBEDD9D-CB0E-426C-9209-BCEBD81BED29}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventHub.Admin", "EventHub.Admin\EventHub.Admin.csproj", "{A7BC4DC7-AB75-4A59-8521-F2029D791AAD}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SupplierSystem.Web", "SupplierSystem.Web\SupplierSystem.Web.csproj", "{A7BC4DC7-AB75-4A59-8521-F2029D791AAD}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventHub.Tests", "EventHub.Tests\EventHub.Tests.csproj", "{722D2D77-BEE8-4101-BEE3-9AF418790380}"
 EndProject

@@ -1,0 +1,101 @@
+@model EventHub.Web.Models.Event
+@{
+    ViewData["Title"] = Model.Name;
+    var types = Model.TicketTypes.OrderBy(t => t.Price).ToList();
+    var firstFree = types.FirstOrDefault(t => t.Remaining > 0);
+    var signedIn = User.Identity?.IsAuthenticated == true;
+    var canBuy = User.IsInRole(Roles.Client);
+}
+<section class="pub-wrap pub-section">
+    <a class="back-link" asp-action="Index"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>All events</a>
+
+    <div class="detail-cover @EventTypes.Css(Model.EventType)" @Html.Raw(Model.ImageUrl is null ? "" : $"style=\"background-image:url('{System.Net.WebUtility.HtmlEncode(Model.ImageUrl)}')\"")>
+        @if (Model.ImageUrl is null) { <span class="cover-icon cover-icon-xl" aria-hidden="true">@EventTypes.Icon(Model.EventType)</span> }
+        <div class="detail-cover-text">
+            <span class="type-pill type-pill-light">@Model.EventType</span>
+            <h1>@Model.Name</h1>
+        </div>
+    </div>
+
+    <div class="detail-grid">
+        <div>
+            <div class="fact-row">
+                <div class="fact"><span class="fact-icon">📅</span><div><small>Date</small><b>@Model.StartsAtUtc.ToString("ddd d MMM yyyy")</b></div></div>
+                <div class="fact"><span class="fact-icon">🕒</span><div><small>Time (UTC)</small><b>@Model.StartsAtUtc.ToString("HH:mm")</b></div></div>
+                <div class="fact"><span class="fact-icon">📍</span><div><small>Venue</small><b>@Model.Venue</b></div></div>
+            </div>
+            <h2 class="mt-4">About this event</h2>
+            <p class="detail-text">@(string.IsNullOrWhiteSpace(Model.Description) ? "The organizer has not added a description yet." : Model.Description)</p>
+        </div>
+
+        <aside class="ticket-box">
+            <h2>Get your tickets</h2>
+            @if (!types.Any(t => t.Remaining > 0))
+            {
+                <div class="sold-out-box">This event is sold out.</div>
+            }
+            else
+            {
+                <form method="get" asp-controller="Checkout" asp-action="Index" id="buy-form">
+                    <input type="hidden" name="eventId" value="@Model.Id" />
+                    <div class="ticket-options">
+                        @foreach (var t in types)
+                        {
+                            <label class="ticket-option @(t.Remaining == 0 ? "is-off" : "")">
+                                <input type="radio" name="ticketTypeId" value="@t.Id" data-price="@t.Price.ToString(System.Globalization.CultureInfo.InvariantCulture)" data-left="@t.Remaining" @(t.Remaining == 0 ? "disabled" : "") @(firstFree?.Id == t.Id ? "checked" : "") />
+                                <span class="ticket-option-main">
+                                    <b>@t.Name</b>
+                                    @if (!string.IsNullOrWhiteSpace(t.Description)) { <small>@t.Description</small> }
+                                    <small class="@(t.Remaining is > 0 and <= 20 ? "text-few" : "")">@(t.Remaining == 0 ? "Sold out" : t.Remaining <= 20 ? $"Only {t.Remaining} left" : $"{t.Remaining} available")</small>
+                                </span>
+                                <span class="ticket-option-price">@(t.Price == 0 ? "Free" : "$" + t.Price.ToString("0.##"))</span>
+                            </label>
+                        }
+                    </div>
+                    <div class="qty-row">
+                        <label for="qty">Tickets</label>
+                        <select id="qty" name="quantity" class="form-select">
+                            @for (var i = 1; i <= 10; i++) { <option value="@i">@i</option> }
+                        </select>
+                    </div>
+                    <div class="total-row"><span>Total</span><b id="total">$0</b></div>
+                    @if (canBuy)
+                    {
+                        <button class="btn btn-primary btn-lg w-100">Buy tickets</button>
+                    }
+                    else if (!signedIn)
+                    {
+                        <button class="btn btn-primary btn-lg w-100">Log in to buy</button>
+                        <p class="ticket-note">You need a client account. <a asp-controller="Account" asp-action="Register">Sign up free</a></p>
+                    }
+                    else
+                    {
+                        <div class="sold-out-box">Only client accounts can buy tickets.</div>
+                    }
+                </form>
+            }
+        </aside>
+    </div>
+</section>
+
+@section Scripts {
+<script>
+    (function () {
+        var form = document.getElementById('buy-form');
+        if (!form) return;
+        var qty = document.getElementById('qty');
+        var total = document.getElementById('total');
+        function update() {
+            var checked = form.querySelector('input[name="ticketTypeId"]:checked');
+            if (!checked) { total.textContent = '$0'; return; }
+            var left = parseInt(checked.dataset.left, 10);
+            Array.prototype.forEach.call(qty.options, function (o) { o.disabled = parseInt(o.value, 10) > left; });
+            if (parseInt(qty.value, 10) > left) qty.value = String(Math.max(1, Math.min(left, 10)));
+            var sum = parseFloat(checked.dataset.price) * parseInt(qty.value, 10);
+            total.textContent = sum === 0 ? 'Free' : '$' + sum.toFixed(2).replace(/\.00$/, '');
+        }
+        form.addEventListener('change', update);
+        update();
+    })();
+</script>
+}

@@ -6,56 +6,55 @@ public sealed record QueueBinding(string Exchange, string Queue, IReadOnlyList<s
 /// <summary>Single source of truth for every exchange, queue and routing key name.</summary>
 public static class Topology
 {
-    public const string ClientExchange = "eventhub.client";      // Client -> Admin
-    public const string AdminExchange = "eventhub.admin";        // Admin  -> Client
-    public const string DeadLetterExchange = "eventhub.dlx";     // retry + dead letters
+    public const string EventHubExchange = "eventhub.exchange";      // Event Hub      -> Supplier System
+    public const string SupplierExchange = "supplier.exchange";      // Supplier System -> Event Hub
+    public const string DeadLetterExchange = "eventhub.dlx";         // retry + dead letters
 
     public static class Queues
     {
-        public const string AdminModeration = "admin.moderation";
-        public const string AdminActivity = "admin.activity";
-        public const string AdminAccounts = "admin.accounts";
-        public const string AdminPayments = "admin.payments";
-        public const string ClientModerationResults = "client.moderation-results";
-        public const string ClientUsers = "client.users";
-        public const string ClientCatalog = "client.catalog";
+        public const string SupplierPayments = "supplier.payments";
+        public const string EventHubOrderUpdates = "eventhub.order-updates";
+        public const string EventHubInvoices = "eventhub.invoices";
+        public const string EventHubCatalog = "eventhub.catalog";
+
+        /// <summary>One order queue per supply category, for example supplier.orders.catering.</summary>
+        public static string SupplierOrders(string category) => $"supplier.orders.{category}";
     }
 
     public static class Keys
     {
-        public const string EventSubmitted = "event.submitted";
-        public const string EventUpdated = "event.updated";
-        public const string EventCancelled = "event.cancelled";
-        public const string EventReported = "event.reported";
-        public const string RsvpCreated = "rsvp.created";
-        public const string RsvpCancelled = "rsvp.cancelled";
-        public const string CommentPosted = "comment.posted";
-        public const string UserRegistered = "user.registered";
+        // Event Hub -> Supplier System. Order keys get the category appended: order.placed.catering
+        public const string OrderPlaced = "order.placed";
+        public const string OrderCancelled = "order.cancelled";
         public const string PaymentCompleted = "payment.completed";
 
-        public const string EventApproved = "event.approved";
-        public const string EventRejected = "event.rejected";
-        public const string ReportResolved = "report.resolved";
-        public const string UserBanned = "user.banned";
-        public const string UserUnbanned = "user.unbanned";
-        public const string CategoryChanged = "category.changed";
+        // Supplier System -> Event Hub
+        public const string OrderStatusChanged = "order.status.changed";
+        public const string OrderRejected = "order.rejected";
+        public const string InvoiceIssued = "invoice.issued";
+        public const string CatalogPublished = "catalog.published";
+        public const string ItemAvailabilityChanged = "catalog.availability.changed";
     }
 
     public static string RetryQueue(string queue) => $"{queue}.retry";
     public static string DeadLetterQueue(string queue) => $"{queue}.dlq";
 
     /// <summary>Every main queue and the routing keys bound to it.</summary>
-    public static readonly IReadOnlyList<QueueBinding> Bindings =
-    [
-        new(ClientExchange, Queues.AdminModeration,
-            [Keys.EventSubmitted, Keys.EventUpdated, Keys.EventCancelled, Keys.EventReported]),
-        new(ClientExchange, Queues.AdminActivity, ["rsvp.*", Keys.CommentPosted]),
-        new(ClientExchange, Queues.AdminAccounts, [Keys.UserRegistered]),
-        new(ClientExchange, Queues.AdminPayments, [Keys.PaymentCompleted]),
+    public static readonly IReadOnlyList<QueueBinding> Bindings = BuildBindings();
 
-        new(AdminExchange, Queues.ClientModerationResults,
-            [Keys.EventApproved, Keys.EventRejected, Keys.ReportResolved]),
-        new(AdminExchange, Queues.ClientUsers, [Keys.UserBanned, Keys.UserUnbanned]),
-        new(AdminExchange, Queues.ClientCatalog, [Keys.CategoryChanged]),
-    ];
+    private static IReadOnlyList<QueueBinding> BuildBindings()
+    {
+        var bindings = new List<QueueBinding>();
+
+        foreach (var category in SupplyCategories.All)
+            bindings.Add(new QueueBinding(EventHubExchange, Queues.SupplierOrders(category), [$"order.*.{category}"]));
+
+        bindings.Add(new QueueBinding(EventHubExchange, Queues.SupplierPayments, [Keys.PaymentCompleted]));
+
+        bindings.Add(new QueueBinding(SupplierExchange, Queues.EventHubOrderUpdates, ["order.#"]));
+        bindings.Add(new QueueBinding(SupplierExchange, Queues.EventHubInvoices, [Keys.InvoiceIssued]));
+        bindings.Add(new QueueBinding(SupplierExchange, Queues.EventHubCatalog, ["catalog.#"]));
+
+        return bindings;
+    }
 }

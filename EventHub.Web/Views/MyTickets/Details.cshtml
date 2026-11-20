@@ -1,0 +1,78 @@
+@model EventHub.Web.Models.TicketPurchase
+@{
+    ViewData["Title"] = "Your tickets";
+    var ev = Model.Event!;
+    var refunded = Model.Status == PurchaseStatus.Refunded;
+    var count = Model.Tickets.Count;
+    var paid = Model.Total == 0 ? "Free" : "$" + Model.Total.ToString("N2");
+}
+<section class="pub-wrap pub-section">
+    <a class="back-link no-print" asp-action="Index"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>My tickets</a>
+    <h1 class="page-title mb-3">@ev.Name <partial name="_StatusBadge" model="@Model.Status.ToString()" /></h1>
+
+    <div class="pass-summary">
+        <div><small>Tickets</small><b>@Model.Quantity &times; @Model.TicketTypeName</b></div>
+        <div><small>Paid</small><b>@paid</b></div>
+        <div><small>Reference</small><b>@(Model.PaymentReference ?? "-")</b></div>
+        <div><small>Starts in</small><b><partial name="_WhenChip" model="ev.StartsAtUtc" /></b></div>
+        <div class="pass-actions no-print">
+            @if (!refunded)
+            {
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="add-to-calendar"
+                        data-title="@ev.Name" data-venue="@ev.Venue"
+                        data-start="@ev.StartsAtUtc.ToString("yyyyMMdd'T'HHmmss'Z'")"
+                        data-end="@ev.StartsAtUtc.AddHours(3).ToString("yyyyMMdd'T'HHmmss'Z'")">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18M12 13v5M9.5 15.5h5"/></svg>Add to calendar
+                </button>
+            }
+            <button type="button" class="btn btn-sm btn-soft" onclick="window.print()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M6 14h12v7H6z"/></svg>Print or save as PDF
+            </button>
+        </div>
+    </div>
+
+    @if (refunded)
+    {
+        <div class="alert alert-warning no-print">This event was cancelled. Your payment was refunded and these tickets are no longer valid.</div>
+    }
+
+    <div class="ticket-list">
+        @for (var i = 0; i < count; i++)
+        {
+            var t = Model.Tickets[i];
+            var used = t.UsedAtUtc is not null;
+            <article class="ticket-card @(refunded ? "is-void" : used ? "is-used" : "")" style="--i:@i" aria-label="Ticket @(i + 1) of @count for @ev.Name">
+                <div class="ticket-main @EventTypes.Css(ev.EventType)">
+                    <div class="ticket-admit" aria-hidden="true"><span>Admit one &middot; @Model.TicketTypeName</span></div>
+                    <span class="ticket-watermark" aria-hidden="true">@EventTypes.Icon(ev.EventType)</span>
+                    <div class="ticket-top">
+                        <span class="type-pill type-pill-light">@ev.EventType</span>
+                        @if (!refunded && !used) { <partial name="_WhenChip" model="ev.StartsAtUtc" /> }
+                        <span class="ticket-no">No. @((i + 1).ToString("00")) / @count.ToString("00")</span>
+                    </div>
+                    <h2>@ev.Name</h2>
+                    <div class="ticket-facts">
+                        <div><small>Date</small><b>@ev.StartsAtUtc.ToString("ddd d MMM yyyy")</b></div>
+                        <div><small>Doors (UTC)</small><b>@ev.StartsAtUtc.ToString("HH:mm")</b></div>
+                        <div><small>Ticket</small><b>@Model.TicketTypeName</b></div>
+                        <div class="fact-wide"><small>Venue</small><b>@ev.Venue</b></div>
+                        <div><small>Holder</small><b>@t.HolderName</b></div>
+                    </div>
+                </div>
+                <div class="ticket-stub">
+                    <span class="stub-label">Scan at the door</span>
+                    <div class="qr-frame"><div class="qr" data-code="@t.Code" role="img" aria-label="QR code for ticket @t.Code"></div></div>
+                    <code>@t.Code</code>
+                    <div class="barcode" aria-hidden="true"></div>
+                </div>
+                @if (refunded) { <span class="ticket-stamp is-void" aria-hidden="true">Void</span> }
+                else if (used) { <span class="ticket-stamp is-used" aria-hidden="true">Scanned</span> }
+            </article>
+        }
+    </div>
+</section>
+
+@section Scripts {
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="~/js/tickets.js" asp-append-version="true"></script>
+}

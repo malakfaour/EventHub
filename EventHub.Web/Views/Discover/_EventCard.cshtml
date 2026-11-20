@@ -1,0 +1,24 @@
+@model EventHub.Web.Models.Event
+@{
+    var available = Model.TicketTypes.Where(t => t.Remaining > 0).ToList();
+    var soldOut = !available.Any();
+    var from = available.Any() ? available.Min(t => t.Price) : 0m;
+    var left = available.Sum(t => t.Remaining);
+}
+<a class="event-card" asp-controller="Discover" asp-action="Details" asp-route-id="@Model.Id">
+    <div class="event-cover @EventTypes.Css(Model.EventType)" @Html.Raw(Model.ImageUrl is null ? "" : $"style=\"background-image:url('{System.Net.WebUtility.HtmlEncode(Model.ImageUrl)}')\"")>
+        @if (Model.ImageUrl is null) { <span class="cover-icon" aria-hidden="true">@EventTypes.Icon(Model.EventType)</span> }
+        <span class="date-chip"><small>@Model.StartsAtUtc.ToString("MMM")</small><b>@Model.StartsAtUtc.ToString("dd")</b></span>
+        @if (soldOut) { <span class="cover-flag is-sold">Sold out</span> }
+        else if (left <= 20) { <span class="cover-flag is-few">Only @left left</span> }
+    </div>
+    <div class="event-body">
+        <span class="type-pill">@Model.EventType</span>
+        <h3>@Model.Name</h3>
+        <p class="event-meta">@Model.StartsAtUtc.ToString("ddd d MMM · HH:mm") &middot; @Model.Venue</p>
+        <div class="event-foot">
+            <span class="event-price">@(soldOut ? "—" : from == 0 ? "Free" : "From $" + from.ToString("0.##"))</span>
+            <span class="event-go">Get tickets &rarr;</span>
+        </div>
+    </div>
+</a>

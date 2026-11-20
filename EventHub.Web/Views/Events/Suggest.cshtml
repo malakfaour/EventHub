@@ -1,0 +1,52 @@
+@model EventHub.Web.Models.Event
+@{
+    ViewData["Title"] = "Suggested needs";
+    var advice = (EventHub.Web.Services.Ai.AdviceResult)ViewBag.Advice;
+}
+<a class="back-link" asp-action="Details" asp-route-id="@Model.Id">&larr; @Model.Name</a>
+<div class="page-header">
+    <div>
+        <div class="crumbs">Event · <b>@Model.Name</b></div>
+        <h1 class="page-title">Suggested needs</h1>
+    </div>
+    <div class="page-actions">
+        <span class="status @(advice.Source == "AI" ? "status-indigo" : "status-gray")">@(advice.Source == "AI" ? "Suggested by AI" : "Built-in rules")</span>
+    </div>
+</div>
+
+<p class="text-muted">Based on a @Model.EventType event for @Model.ExpectedGuests guests. These are suggestions only: nothing is added until you choose.</p>
+@if (advice.Warning is not null)
+{
+    <div class="alert alert-warning">@advice.Warning</div>
+}
+
+@if (!advice.Needs.Any())
+{
+    <div class="panel"><div class="empty-state"><strong>Nothing to suggest</strong>This kind of event does not seem to need any of the supplier categories.</div></div>
+}
+
+@foreach (var n in advice.Needs)
+{
+    var already = Model.Requirements.Any(r => r.Category == n.Category);
+    <section class="panel panel-body">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+            <div>
+                <h2 class="panel-title mb-1">@SupplyCategories.DisplayName(n.Category)</h2>
+                <p class="mb-1">@n.Notes</p>
+                @if (n.Why.Length > 0) { <p class="text-muted small mb-0">@n.Why</p> }
+            </div>
+            @if (already)
+            {
+                <span class="status status-green">Already on the list</span>
+            }
+            else
+            {
+                <form asp-action="AddRequirement" asp-route-id="@Model.Id" method="post">
+                    <input type="hidden" name="Category" value="@n.Category" />
+                    <input type="hidden" name="Notes" value="@n.Notes" />
+                    <button class="btn btn-primary">Add to this event</button>
+                </form>
+            }
+        </div>
+    </section>
+}
