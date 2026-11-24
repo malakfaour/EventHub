@@ -13,6 +13,9 @@ public interface IInvoiceService
     /// <summary>Creates the invoice for a delivered order and queues InvoiceIssued, in one transaction.</summary>
     Task IssueAsync(Guid orderId, Guid? supplierScope, CancellationToken ct = default);
 
+    /// <summary>For manual orders only: the customer paid the supplier directly, so staff record it.</summary>
+    Task MarkPaidManuallyAsync(Guid orderId, Guid? supplierScope, CancellationToken ct = default);
+
     /// <summary>The Event Hub paid: mark the invoice as paid (safe to receive twice).</summary>
     Task ApplyPaymentAsync(PaymentCompleted message, CancellationToken ct = default);
 }
@@ -79,6 +82,19 @@ public sealed class InvoiceService : IInvoiceService
 
         await _invoices.SaveChangesAsync(ct);
         _logger.LogInformation("Invoice {Number} issued for order {OrderId}: {Amount}", invoice.Number, order.Id, invoice.Amount);
+    }
+
+    public async Task MarkPaidManuallyAsync(Guid orderId, Guid? supplierScope, CancellationToken ct = default)
+    {
+        var invoice = await GetByOrderAsync(orderId, supplierScope, ct) ?? throw new InvalidOperationException("Invoice not found.");
+        var order = await _orders.GetAsync(orderId, ct) ?? throw new InvalidOperationException("Order not found.");
+        if (order.ExternalOrderId is not null)
+            throw new InvalidOperationException("This invoice is paid by the organizer through the Event Hub.");
+        if (invoice.Status == InvoiceStatus.Paid) return;
+
+        invoice.MarkPaid($"MANUAL-{DateTime.UtcNow:yyyyMMdd}");
+        await _invoices.SaveChangesAsync(ct);
+        _logger.LogInformation("Invoice {Number} marked as paid manually", invoice.Number);
     }
 
     public async Task ApplyPaymentAsync(PaymentCompleted m, CancellationToken ct = default)

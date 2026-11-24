@@ -28,4 +28,7 @@ public interface IOrderService
     Task AcceptAsync(Guid id, Guid? supplierScope, CancellationToken ct = default);
     Task RejectAsync(Guid id, Guid? supplierScope, string reasonCode, string reasonText, CancellationToken ct = default);
     Task AdvanceAsync(Guid id, Guid? supplierScope, SupplyOrderStatus next, CancellationToken ct = default);
+
+    /// <summary>Records an order entered by hand for one supplier (no Event Hub involved).</summary>
+    Task<Guid> CreateManualAsync(Guid supplierId, ManualOrderViewModel vm, CancellationToken ct = default);
 }

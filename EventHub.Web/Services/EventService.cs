@@ -62,6 +62,9 @@ public sealed class EventService : IEventService
         ev.Description = vm.Description?.Trim();
         ev.Venue = vm.Venue.Trim();
         ev.StartsAtUtc = DateTime.SpecifyKind(vm.StartsAtUtc, DateTimeKind.Utc);
+        var allocatedTickets = ev.TicketTypes.Sum(t => t.Quantity);
+        if (vm.ExpectedGuests < allocatedTickets)
+            throw new InvalidOperationException($"{allocatedTickets} tickets are already allocated, so the capacity cannot be lower than that.");
         ev.ExpectedGuests = vm.ExpectedGuests;
         ev.EventType = EventTypes.All.Contains(vm.EventType) ? vm.EventType : "Other";
         ev.ImageUrl = string.IsNullOrWhiteSpace(vm.ImageUrl) ? null : vm.ImageUrl.Trim();
@@ -113,6 +116,12 @@ public sealed class EventService : IEventService
         var ev = await LoadOpenAsync(id, organizerId, ct);
         if (ev.TicketTypes.Any(t => string.Equals(t.Name, vm.Name.Trim(), StringComparison.OrdinalIgnoreCase)))
             throw new InvalidOperationException("There is already a ticket type with that name.");
+
+        // The expected guests number is the capacity of the venue: all ticket types together cannot exceed it.
+        var allocated = ev.TicketTypes.Sum(t => t.Quantity);
+        if (allocated + vm.Quantity > ev.ExpectedGuests)
+            throw new InvalidOperationException(
+                $"The event holds {ev.ExpectedGuests} guests and {allocated} tickets are already allocated, so at most {Math.Max(0, ev.ExpectedGuests - allocated)} more can be added.");
 
         await _events.AddTicketTypeAsync(new TicketType
         {

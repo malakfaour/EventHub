@@ -31,6 +31,9 @@ public sealed class CatalogRepository : ICatalogRepository
     public async Task AddProductAsync(Product product, CancellationToken ct = default) =>
         await _db.Products.AddAsync(product, ct);
 
+    public async Task AddSupplierAsync(Supplier supplier, CancellationToken ct = default) =>
+        await _db.Suppliers.AddAsync(supplier, ct);
+
     public Task SaveChangesAsync(CancellationToken ct = default) => _db.SaveChangesAsync(ct);
 
     public async Task ExecuteInTransactionAsync(Func<Task> work, CancellationToken ct = default)

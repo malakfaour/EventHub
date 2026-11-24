@@ -1,0 +1,42 @@
+@model EventHub.Web.Models.Event
+@{
+    ViewData["Title"] = "Check-in";
+    var tickets = (List<EventHub.Web.Models.Ticket>)ViewBag.Tickets;
+    var used = tickets.Count(t => t.IsUsed);
+}
+<a class="back-link" asp-controller="Events" asp-action="Details" asp-route-id="@Model.Id">&larr; @Model.Name</a>
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Check-in</h1>
+        <p class="page-sub">@used of @tickets.Count tickets used. Type or scan the ticket code from the client's QR.</p>
+    </div>
+    <div class="page-actions"><a class="btn btn-outline-primary" asp-action="Guests" asp-route-id="@Model.Id">Guest list</a></div>
+</div>
+<section class="panel">
+    <form asp-action="CheckIn" asp-route-id="@Model.Id" method="post" class="panel-body row g-2 align-items-end">
+        <div class="col-md-9"><label class="form-label">Ticket code</label><input name="code" class="form-control" autofocus autocomplete="off" required /></div>
+        <div class="col-md-3"><button class="btn btn-primary w-100">Check in</button></div>
+    </form>
+</section>
+<section class="panel mt-3">
+    @if (!tickets.Any())
+    {
+        <div class="empty-state"><strong>No tickets sold</strong>Tickets appear here after clients buy them.</div>
+    }
+    else
+    {
+        <div class="table-wrap"><table class="table table-hover">
+            <thead><tr><th>Holder</th><th>Code</th><th>State</th></tr></thead>
+            <tbody>
+            @foreach (var t in tickets)
+            {
+                <tr>
+                    <td class="cell-title">@t.HolderName</td>
+                    <td><code>@t.Code</code></td>
+                    <td>@if (t.IsUsed) { <span class="status status-gray">Used @t.UsedAtUtc!.Value.ToString("HH:mm") UTC</span> } else { <span class="status status-green">Valid</span> }</td>
+                </tr>
+            }
+            </tbody>
+        </table></div>
+    }
+</section>

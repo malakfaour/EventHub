@@ -16,7 +16,7 @@ public class EventFormViewModel
     [Display(Name = "Starts at (UTC)")]
     public DateTime StartsAtUtc { get; set; } = DateTime.UtcNow.Date.AddDays(30).AddHours(18);
 
-    [Range(1, 100000), Display(Name = "Expected guests")]
+    [Range(1, 100000), Display(Name = "Expected guests (venue capacity)")]
     public int ExpectedGuests { get; set; } = 50;
 
     [Display(Name = "Event type")]

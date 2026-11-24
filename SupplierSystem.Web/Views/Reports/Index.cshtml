@@ -1,0 +1,53 @@
+@model SupplierSystem.Web.ViewModels.SupplierReport
+@using System.Text.Json
+@{
+    ViewData["Title"] = "Reports";
+    string Labels(List<LabelValue> l) => JsonSerializer.Serialize(l.Select(x => x.Label));
+    string Values(List<LabelValue> l) => JsonSerializer.Serialize(l.Select(x => x.Value));
+}
+<div class="page-header">
+    <div>
+        <div class="crumbs">Workspace / <b>Reports</b></div>
+        <h1 class="page-title">Reports <span class="text-muted fs-6 fw-normal">@Model.Scope</span></h1>
+    </div>
+    <div class="page-actions">
+        <a class="btn btn-outline-primary" asp-action="ExportExcel">Export Excel</a>
+        <a class="btn btn-primary" asp-action="ExportPdf">Export PDF</a>
+    </div>
+</div>
+
+<div class="stat-grid">
+    <div class="stat-card is-accent"><span class="stat-label">Revenue</span><span class="stat-value">@Model.Revenue.ToString("N2")</span><span class="stat-meta">@Model.Delivered delivered orders</span></div>
+    <div class="stat-card"><span class="stat-label">Orders received</span><span class="stat-value">@Model.Orders</span><span class="stat-meta">All time</span></div>
+    <div class="stat-card"><span class="stat-label">Acceptance rate</span><span class="stat-value">@Model.AcceptanceRate%</span><span class="stat-meta">Accepted vs rejected</span></div>
+    <div class="stat-card"><span class="stat-label">Outstanding</span><span class="stat-value">@Model.Outstanding.ToString("N2")</span><span class="stat-meta">@Model.Collected.ToString("N2") collected of @Model.Invoiced.ToString("N2") invoiced</span></div>
+</div>
+
+<div class="chart-grid">
+    <section class="panel"><div class="panel-head"><h2>Orders per month</h2></div><div class="panel-body chart-box"><canvas id="cMonth"></canvas></div></section>
+    <section class="panel"><div class="panel-head"><h2>Orders by status</h2></div><div class="panel-body chart-box"><canvas id="cStatus"></canvas></div></section>
+    <section class="panel"><div class="panel-head"><h2>Revenue by product</h2></div><div class="panel-body chart-box"><canvas id="cProduct"></canvas></div></section>
+    <section class="panel"><div class="panel-head"><h2>Invoices</h2></div><div class="panel-body chart-box"><canvas id="cInvoice"></canvas></div></section>
+</div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <script>
+        const palette = ['#0f766e', '#0ea5e9', '#f59e0b', '#ef4444', '#8b5cf6', '#10b981', '#14b8a6', '#ec4899'];
+        function chart(id, type, labels, data, label) {
+            const circular = type === 'doughnut';
+            new Chart(document.getElementById(id), {
+                type: type,
+                data: { labels: labels, datasets: [{ label: label, data: data,
+                    backgroundColor: circular ? palette : palette[0], borderRadius: circular ? 0 : 6 }] },
+                options: { maintainAspectRatio: false,
+                    plugins: { legend: { display: circular, position: 'bottom' } },
+                    scales: circular ? {} : { y: { beginAtZero: true } } }
+            });
+        }
+        chart('cMonth', 'bar', @Html.Raw(Labels(Model.OrdersByMonth)), @Html.Raw(Values(Model.OrdersByMonth)), 'Orders');
+        chart('cStatus', 'doughnut', @Html.Raw(Labels(Model.OrdersByStatus)), @Html.Raw(Values(Model.OrdersByStatus)), 'Orders');
+        chart('cProduct', 'bar', @Html.Raw(Labels(Model.RevenueByProduct)), @Html.Raw(Values(Model.RevenueByProduct)), 'Revenue');
+        chart('cInvoice', 'doughnut', @Html.Raw(Labels(Model.InvoiceAmounts)), @Html.Raw(Values(Model.InvoiceAmounts)), 'Amount');
+    </script>
+}

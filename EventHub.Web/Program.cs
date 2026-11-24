@@ -74,6 +74,7 @@ builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<ICatalogService, CatalogService>();
 builder.Services.AddScoped<ITicketService, TicketService>();
+builder.Services.AddScoped<IDoorService, DoorService>();
 builder.Services.AddSingleton<IPaymentGateway, FakePaymentGateway>();
 builder.Services.Configure<EventHub.Web.Services.Ai.AiOptions>(builder.Configuration.GetSection("Ai"));
 builder.Services.AddHttpClient<EventHub.Web.Services.Ai.IEventAdvisor, EventHub.Web.Services.Ai.EventAdvisor>(c => c.Timeout = TimeSpan.FromSeconds(60));   // the advisor enforces its own, shorter overall limit

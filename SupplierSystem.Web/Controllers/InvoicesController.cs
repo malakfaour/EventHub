@@ -27,4 +27,19 @@ public class InvoicesController : StaffControllerBase
         }
         return RedirectToAction("Details", "Orders", new { id = orderId });
     }
+
+    [HttpPost, ValidateAntiForgeryToken, Authorize(Policy = "CanProcessOrders")]
+    public async Task<IActionResult> MarkPaid(Guid orderId, CancellationToken ct)
+    {
+        try
+        {
+            await _invoices.MarkPaidManuallyAsync(orderId, SupplierScope, ct);
+            TempData["Success"] = "Invoice marked as paid.";
+        }
+        catch (InvalidOperationException ex)
+        {
+            TempData["Error"] = ex.Message;
+        }
+        return RedirectToAction("Details", "Orders", new { id = orderId });
+    }
 }

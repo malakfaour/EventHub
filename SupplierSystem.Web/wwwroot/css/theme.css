@@ -299,3 +299,7 @@ tr[data-href]:hover > td { background: var(--surface-2); }
 .live-toast { display: flex; flex-direction: column; gap: 2px; padding: 12px 16px; background: var(--surface); color: var(--ink, #111827); border: 1px solid var(--border); border-left: 4px solid var(--primary, #4f46e5); border-radius: 12px; box-shadow: 0 10px 30px rgba(15, 23, 42, .18); text-decoration: none; transition: opacity .4s, transform .4s; }
 .live-toast span { font-size: 13px; color: var(--muted); }
 .live-toast.out { opacity: 0; transform: translateY(8px); }
+
+/* Report charts */
+.chart-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 24px; }
+.chart-box { height: 280px; position: relative; }

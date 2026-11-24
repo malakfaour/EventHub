@@ -1,4 +1,7 @@
-# Infrastructure for local development. The two apps are added to this file in Phase 7.
+# Infrastructure for local development (docker compose up -d).
+# To run the two apps in containers as well:  docker compose --profile apps up -d --build
+#   Event Hub        http://localhost:5001
+#   Supplier System  http://localhost:5002
 services:
   rabbitmq:
     image: rabbitmq:3-management
@@ -25,6 +28,39 @@ services:
       MSSQL_SA_PASSWORD: ${SA_PASSWORD:-Your_strong_Pass123}
     volumes:
       - sqldata:/var/opt/mssql
+
+  eventhub-web:
+    profiles: ["apps"]
+    build:
+      context: .
+      args: { APP: EventHub.Web }
+    container_name: eventhub-web
+    depends_on: [rabbitmq, sqlserver]
+    ports: ["5001:8080"]
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development      # Development seeds the demo data
+      ConnectionStrings__Default: "Server=sqlserver,1433;Database=EventHubDb;User Id=sa;Password=${SA_PASSWORD:-Your_strong_Pass123};TrustServerCertificate=True;"
+      RabbitMq__HostName: rabbitmq
+      RabbitMq__UserName: ${RABBITMQ_USER:-eventhub}
+      RabbitMq__Password: ${RABBITMQ_PASS:-eventhub_pw}
+      Ai__ApiKey: ${AI_API_KEY:-}               # optional, never commit a key
+    restart: on-failure
+
+  supplier-web:
+    profiles: ["apps"]
+    build:
+      context: .
+      args: { APP: SupplierSystem.Web }
+    container_name: supplier-web
+    depends_on: [rabbitmq, sqlserver]
+    ports: ["5002:8080"]
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__Default: "Server=sqlserver,1433;Database=SupplierDb;User Id=sa;Password=${SA_PASSWORD:-Your_strong_Pass123};TrustServerCertificate=True;"
+      RabbitMq__HostName: rabbitmq
+      RabbitMq__UserName: ${RABBITMQ_USER:-eventhub}
+      RabbitMq__Password: ${RABBITMQ_PASS:-eventhub_pw}
+    restart: on-failure
 
 volumes:
   sqldata:

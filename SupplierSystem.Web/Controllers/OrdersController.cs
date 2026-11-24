@@ -2,6 +2,7 @@ using EventHub.Contracts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SupplierSystem.Web.Services;
+using SupplierSystem.Web.ViewModels;
 
 namespace SupplierSystem.Web.Controllers;
 
@@ -10,11 +11,13 @@ public class OrdersController : StaffControllerBase
 {
     private readonly IOrderService _orders;
     private readonly IInvoiceService _invoices;
+    private readonly ICatalogService _catalog;
 
-    public OrdersController(IOrderService orders, IInvoiceService invoices)
+    public OrdersController(IOrderService orders, IInvoiceService invoices, ICatalogService catalog)
     {
         _orders = orders;
         _invoices = invoices;
+        _catalog = catalog;
     }
 
     public async Task<IActionResult> Index(SupplyOrderStatus? status, CancellationToken ct)
@@ -29,6 +32,44 @@ public class OrdersController : StaffControllerBase
         if (order is null) return NotFound();
         ViewBag.Invoice = await _invoices.GetByOrderAsync(order.Id, SupplierScope, ct);
         return View(order);
+    }
+
+    [Authorize(Policy = "CanProcessOrders")]
+    public async Task<IActionResult> Create(CancellationToken ct)
+    {
+        var vm = new ManualOrderViewModel();
+        await FillItemsAsync(vm, ct);
+        return View(vm);
+    }
+
+    [HttpPost, ValidateAntiForgeryToken, Authorize(Policy = "CanProcessOrders")]
+    public async Task<IActionResult> Create(ManualOrderViewModel vm, CancellationToken ct)
+    {
+        if (ModelState.IsValid)
+        {
+            try
+            {
+                var id = await _orders.CreateManualAsync(RequiredSupplier, vm, ct);
+                TempData["Success"] = "Order recorded.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+            catch (InvalidOperationException ex)
+            {
+                ModelState.AddModelError("", ex.Message);
+            }
+        }
+        var quantities = vm.Items.ToDictionary(i => i.ProductId, i => i.Quantity);
+        await FillItemsAsync(vm, ct);
+        foreach (var item in vm.Items) if (quantities.TryGetValue(item.ProductId, out var q)) item.Quantity = q;
+        return View(vm);
+    }
+
+    private async Task FillItemsAsync(ManualOrderViewModel vm, CancellationToken ct)
+    {
+        var products = await _catalog.ListProductsAsync(RequiredSupplier, ct);
+        ViewBag.Products = products.Where(p => p.IsActive).OrderBy(p => p.Name).ToList();
+        vm.Items = ((List<SupplierSystem.Web.Models.Product>)ViewBag.Products)
+            .Select(p => new ManualOrderItem { ProductId = p.Id }).ToList();
     }
 
     [HttpPost, ValidateAntiForgeryToken, Authorize(Policy = "CanProcessOrders")]

@@ -25,6 +25,8 @@
         @if (!string.IsNullOrWhiteSpace(Model.Description)) { <p class="hero-desc">@Model.Description</p> }
     </div>
     <div class="page-actions">
+        <a class="btn btn-ghost-light" asp-controller="Door" asp-action="Guests" asp-route-id="@Model.Id">Guests</a>
+        <a class="btn btn-ghost-light" asp-controller="Door" asp-action="CheckIn" asp-route-id="@Model.Id">Check-in</a>
         @if (Model.IsOpen)
         {
             <a class="btn btn-ghost-light" asp-action="Edit" asp-route-id="@Model.Id">Edit</a>
@@ -138,7 +140,7 @@
     <div class="panel-head">
         <div>
             <h3 class="panel-title">@(Model.IsPublished ? "On sale" : "Not published")</h3>
-            <span class="panel-note">@(Model.IsPublished ? "Clients can find this event and buy tickets." : "Add ticket types, then publish so clients can see the event.")</span>
+            <span class="panel-note">Capacity @Model.ExpectedGuests, @Model.TicketTypes.Sum(t => t.Quantity) allocated. @(Model.IsPublished ? "Clients can find this event and buy tickets." : "Add ticket types, then publish so clients can see the event.")</span>
         </div>
         @if (Model.IsOpen)
         {
@@ -190,7 +192,7 @@
             <div class="col-md-3"><label class="form-label" for="tt-name">Name</label><input id="tt-name" name="Name" class="form-control" placeholder="VIP" required /></div>
             <div class="col-md-3"><label class="form-label" for="tt-desc">Description</label><input id="tt-desc" name="Description" class="form-control" placeholder="Optional" /></div>
             <div class="col-md-2"><label class="form-label" for="tt-price">Price ($)</label><input id="tt-price" name="Price" type="number" min="0" step="0.01" value="25" class="form-control" /></div>
-            <div class="col-md-2"><label class="form-label" for="tt-qty">Quantity</label><input id="tt-qty" name="Quantity" type="number" min="1" value="100" class="form-control" /></div>
+            <div class="col-md-2"><label class="form-label" for="tt-qty">Quantity</label><input id="tt-qty" name="Quantity" type="number" min="1" max="@Math.Max(1, Model.ExpectedGuests - Model.TicketTypes.Sum(t => t.Quantity))" value="@Math.Max(1, Model.ExpectedGuests - Model.TicketTypes.Sum(t => t.Quantity))" class="form-control" /></div>
             <div class="col-md-2"><button class="btn btn-soft w-100">Add type</button></div>
         </form>
     }

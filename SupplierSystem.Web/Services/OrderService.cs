@@ -2,6 +2,7 @@ using EventHub.Contracts;
 using EventHub.Messaging;
 using SupplierSystem.Web.Models;
 using SupplierSystem.Web.Repositories;
+using SupplierSystem.Web.ViewModels;
 
 namespace SupplierSystem.Web.Services;
 
@@ -176,6 +177,38 @@ public sealed class OrderService : IOrderService
         EnqueueStatus(order, next, null);
         await _orders.SaveChangesAsync(ct);
         _logger.LogInformation("Order {OrderId} is now {Status}", order.Id, next);
+    }
+
+    public async Task<Guid> CreateManualAsync(Guid supplierId, ManualOrderViewModel vm, CancellationToken ct = default)
+    {
+        var supplier = await _catalog.GetSupplierAsync(supplierId, ct) ?? throw new InvalidOperationException("Supplier not found.");
+
+        // Only this supplier's active products; the same product on two rows is added up.
+        var wanted = vm.Items.Where(i => i.Quantity > 0).GroupBy(i => i.ProductId)
+            .ToDictionary(g => g.Key, g => g.Sum(i => i.Quantity));
+        if (wanted.Count == 0) throw new InvalidOperationException("Choose at least one item.");
+
+        var products = (await _catalog.GetProductsAsync(wanted.Keys.ToList(), ct))
+            .Where(p => p.SupplierId == supplier.Id && p.IsActive).ToDictionary(p => p.Id);
+        if (products.Count != wanted.Count) throw new InvalidOperationException("One of the items is not in your catalog.");
+
+        // A walk-in customer has no Event Hub account, so it gets its own customer record with a made-up external id.
+        var customer = new Customer
+        {
+            Id = Guid.NewGuid(),
+            ExternalOrganizerId = Guid.NewGuid(),
+            Name = vm.CustomerName.Trim(),
+            Email = vm.CustomerEmail?.Trim() ?? ""
+        };
+        await _orders.AddCustomerAsync(customer, ct);
+
+        var order = SupplyOrder.CreateManual(supplier.Id, customer.Id, vm.EventName.Trim(), vm.DeliveryAtUtc,
+            vm.DeliveryAddress.Trim(), vm.Notes?.Trim(),
+            wanted.Select(w => (w.Key, products[w.Key].Name, products[w.Key].Unit, w.Value, products[w.Key].Price)));
+        await _orders.AddAsync(order, ct);
+        await _orders.SaveChangesAsync(ct);
+        _logger.LogInformation("Manual order {OrderId} recorded for {Customer}", order.Id, customer.Name);
+        return order.Id;
     }
 
     // ───────────── Helpers ─────────────

@@ -1,0 +1,35 @@
+@model List<SupplierSystem.Web.ViewModels.SupplierRow>
+@{ ViewData["Title"] = "Suppliers"; }
+<div class="page-header">
+    <div>
+        <div class="crumbs">Platform / <b>Suppliers</b></div>
+        <h1 class="page-title">Suppliers</h1>
+        <p class="page-sub">Each supplier sells one category and manages its own catalog through its manager account.</p>
+    </div>
+    <div class="page-actions"><a class="btn btn-primary" asp-action="Create">New supplier</a></div>
+</div>
+<section class="panel">
+    <div class="table-wrap">
+    <table class="table table-hover">
+        <thead><tr><th>Name</th><th>Specialty</th><th>Contact</th><th class="num">Products</th><th class="num">Accounts</th><th>State</th><th></th></tr></thead>
+        <tbody>
+        @foreach (var s in Model)
+        {
+            <tr>
+                <td><div class="with-tile"><span class="tile">@(s.Name.Length > 0 ? s.Name[..1] : "?")</span><span class="cell-title">@s.Name</span></div></td>
+                <td>@SupplyCategories.DisplayName(s.Category)</td>
+                <td class="text-muted">@s.ContactEmail</td>
+                <td class="num">@s.Products</td>
+                <td class="num">@s.Staff</td>
+                <td>@if (s.IsActive) { <span class="status status-green">Active</span> } else { <span class="status status-gray">Inactive</span> }</td>
+                <td class="text-end">
+                    <form asp-action="Toggle" asp-route-id="@s.Id" method="post" class="d-inline">
+                        <button class="btn btn-sm @(s.IsActive ? "btn-outline-danger" : "btn-outline-primary")">@(s.IsActive ? "Deactivate" : "Activate")</button>
+                    </form>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+    </div>
+</section>
