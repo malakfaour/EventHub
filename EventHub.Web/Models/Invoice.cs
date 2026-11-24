@@ -21,7 +21,11 @@ public class Invoice
     public byte[] RowVersion { get; set; } = [];
 
     public bool IsOverdue => Status == InvoiceStatus.Due && DueAtUtc < DateTime.UtcNow;
-    public string Number => $"INV-{Id.ToString("N")[..8].ToUpperInvariant()}";
+    /// <summary>The supplier's own invoice number from InvoiceIssued, so organizer and supplier quote the same one.</summary>
+    public string? SupplierNumber { get; set; }
+
+    /// <summary>Shown everywhere. Falls back to a number derived from the id for invoices received before SupplierNumber existed.</summary>
+    public string Number => SupplierNumber ?? $"INV-{Id.ToString("N")[..8].ToUpperInvariant()}";
 
     public void MarkPaid(string reference)
     {

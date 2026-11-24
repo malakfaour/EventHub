@@ -40,7 +40,7 @@ public sealed record OrderRejected(
 /// <summary>Invoice sent after delivery.</summary>
 public sealed record InvoiceIssued(
     Guid InvoiceId, Guid OrderId, Guid SupplierId, decimal Amount, string Currency,
-    DateTime IssuedAtUtc, DateTime DueAtUtc) : MessageBase;
+    DateTime IssuedAtUtc, DateTime DueAtUtc, string? Number = null) : MessageBase;   // Number: the supplier's invoice number, so both apps quote the same one
 
 /// <summary>Full snapshot of one supplier's catalog. The Event Hub replaces its local copy with it.</summary>
 public sealed record CatalogPublished(

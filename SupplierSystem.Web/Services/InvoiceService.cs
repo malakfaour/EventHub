@@ -77,7 +77,7 @@ public sealed class InvoiceService : IInvoiceService
         if (order.ExternalOrderId is Guid external)
         {
             _outbox.Enqueue(new InvoiceIssued(invoice.Id, external, order.SupplierId, invoice.Amount, invoice.Currency,
-                invoice.IssuedAtUtc, invoice.DueAtUtc) { CorrelationId = external });
+                invoice.IssuedAtUtc, invoice.DueAtUtc, invoice.Number) { CorrelationId = external });
         }
 
         await _invoices.SaveChangesAsync(ct);

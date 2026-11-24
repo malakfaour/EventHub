@@ -68,7 +68,8 @@ public sealed class InvoiceService : IInvoiceService
         await _invoices.AddAsync(new Invoice
         {
             Id = m.InvoiceId, OrderId = order.Id, SupplierId = m.SupplierId,
-            Amount = m.Amount, Currency = m.Currency, IssuedAtUtc = m.IssuedAtUtc, DueAtUtc = m.DueAtUtc
+            Amount = m.Amount, Currency = m.Currency, IssuedAtUtc = m.IssuedAtUtc, DueAtUtc = m.DueAtUtc,
+            SupplierNumber = string.IsNullOrWhiteSpace(m.Number) ? null : m.Number.Trim()
         }, ct);
         await _invoices.SaveChangesAsync(ct);
         _logger.LogInformation("Invoice {InvoiceId} received for order {OrderId}: {Amount}", m.InvoiceId, m.OrderId, m.Amount);
