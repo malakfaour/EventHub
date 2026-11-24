@@ -3,6 +3,7 @@
     var isClient = User.IsInRole(Roles.Client);
     var isOrganizer = User.IsInRole(Roles.Organizer);
     var controller = ViewContext.RouteData.Values["controller"]?.ToString();
+    var action = ViewContext.RouteData.Values["action"]?.ToString();
     string Active(bool on) => on ? "pub-link active" : "pub-link";
 }
 <!DOCTYPE html>
@@ -13,7 +14,7 @@
     <title>@ViewData["Title"] - Event Hub</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,900&amp;family=Instrument+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/theme.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
@@ -34,8 +35,10 @@
                 }
                 @if (isOrganizer)
                 {
-                    <a class="pub-link" asp-controller="Events" asp-action="Index">My events</a>
+                    <a class="pub-link" asp-controller="Events" asp-action="Index">My workspace</a>
                 }
+                <a class="@Active(controller == "Home" && action == "About")" asp-controller="Home" asp-action="About">About</a>
+                <a class="@Active(controller == "Home" && action == "Contact")" asp-controller="Home" asp-action="Contact">Contact</a>
             </nav>
             <div class="pub-actions">
                 @if (signedIn)
@@ -60,7 +63,19 @@
         @RenderBody()
     </main>
     <footer class="pub-footer">
-        <div class="pub-wrap">&copy; @DateTime.UtcNow.Year Event Hub &middot; Find it. Book it. Be there.</div>
+        <div class="pub-wrap">
+            <div class="footer-brand">
+                <span class="pub-brand-name">Event Hub</span>
+                <p>Running an event? <a asp-controller="Account" asp-action="Register">Create an organizer account</a> to sell tickets and order catering, decoration and sound.</p>
+            </div>
+            <nav class="footer-links" aria-label="Footer">
+                <a asp-controller="Discover" asp-action="Index">Discover</a>
+                <a asp-controller="Home" asp-action="About">About us</a>
+                <a asp-controller="Home" asp-action="Contact">Contact</a>
+                <a asp-controller="Home" asp-action="Privacy">Privacy</a>
+            </nav>
+            <small class="footer-copy">&copy; @DateTime.UtcNow.Year Event Hub, Beirut</small>
+        </div>
     </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>

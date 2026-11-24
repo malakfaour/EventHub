@@ -1,5 +1,6 @@
 using EventHub.Web.Data;
 using EventHub.Web.Models;
+using EventHub.Web.ViewModels;
 using Microsoft.EntityFrameworkCore;
 
 namespace EventHub.Web.Repositories;
@@ -11,8 +12,13 @@ public interface IEventRepository
     Task<List<Event>> ListByOrganizerAsync(Guid organizerId, CancellationToken ct = default);
     Task AddRequirementAsync(EventRequirement requirement, CancellationToken ct = default);
     Task AddTicketTypeAsync(TicketType ticketType, CancellationToken ct = default);
+<<<<<<< HEAD
+    Task<List<Event>> ListPublishedAsync(DiscoverQuery query, CancellationToken ct = default);
+    Task<PublicStats> GetPublicStatsAsync(CancellationToken ct = default);
+=======
     Task AddGuestAsync(Guest guest, CancellationToken ct = default);
     Task<List<Event>> ListPublishedAsync(string? search, string? type, CancellationToken ct = default);
+>>>>>>> origin/main
     Task<Event?> GetPublicAsync(Guid id, CancellationToken ct = default);   // published events only, with ticket types
     Task SaveChangesAsync(CancellationToken ct = default);
 }
@@ -60,7 +66,7 @@ public sealed class EventRepository : IEventRepository
             .FirstOrDefaultAsync(e => e.Id == id, ct);
 
     public Task<List<Event>> ListByOrganizerAsync(Guid organizerId, CancellationToken ct = default) =>
-        _db.Events.AsNoTracking().Include(e => e.Requirements)
+        _db.Events.AsNoTracking().Include(e => e.Requirements).Include(e => e.TicketTypes)
             .Where(e => e.OrganizerId == organizerId).OrderBy(e => e.StartsAtUtc).ToListAsync(ct);
 
     // Marked as Added explicitly: a new child with a preset Guid added to a tracked parent would otherwise be treated as an update.
@@ -70,19 +76,58 @@ public sealed class EventRepository : IEventRepository
     public async Task AddTicketTypeAsync(TicketType ticketType, CancellationToken ct = default) =>
         await _db.TicketTypes.AddAsync(ticketType, ct);
 
+<<<<<<< HEAD
+    public Task<List<Event>> ListPublishedAsync(DiscoverQuery q, CancellationToken ct = default)
+=======
     public async Task AddGuestAsync(Guest guest, CancellationToken ct = default) =>
         await _db.Guests.AddAsync(guest, ct);
 
     public Task<List<Event>> ListPublishedAsync(string? search, string? type, CancellationToken ct = default)
+>>>>>>> origin/main
     {
         var now = DateTime.UtcNow;
         var query = _db.Events.AsNoTracking().Include(e => e.TicketTypes)
             .Where(e => e.IsPublished && e.StartsAtUtc > now);
-        if (!string.IsNullOrWhiteSpace(search))
+        if (!string.IsNullOrWhiteSpace(q.Search))
+        {
+            var search = q.Search.Trim();
             query = query.Where(e => e.Name.Contains(search) || e.Venue.Contains(search));
-        if (!string.IsNullOrWhiteSpace(type))
-            query = query.Where(e => e.EventType == type);
-        return query.OrderBy(e => e.StartsAtUtc).ToListAsync(ct);
+        }
+        if (!string.IsNullOrWhiteSpace(q.Type))
+            query = query.Where(e => e.EventType == q.Type);
+
+        query = q.When switch
+        {
+            DiscoverQuery.WhenToday => query.Where(e => e.StartsAtUtc < now.Date.AddDays(1)),
+            DiscoverQuery.WhenWeek => query.Where(e => e.StartsAtUtc < now.AddDays(7)),
+            DiscoverQuery.WhenMonth => query.Where(e => e.StartsAtUtc < now.AddDays(30)),
+            _ => query
+        };
+        query = q.Price switch
+        {
+            DiscoverQuery.PriceFree => query.Where(e => e.TicketTypes.Any(t => t.Price == 0)),
+            DiscoverQuery.PricePaid => query.Where(e => e.TicketTypes.All(t => t.Price > 0)),
+            _ => query
+        };
+        query = q.Sort switch
+        {
+            DiscoverQuery.SortPopular => query.OrderByDescending(e => e.TicketTypes.Sum(t => t.Sold)).ThenBy(e => e.StartsAtUtc),
+            DiscoverQuery.SortPrice => query.OrderBy(e => e.TicketTypes.Min(t => (decimal?)t.Price)).ThenBy(e => e.StartsAtUtc),
+            _ => query.OrderBy(e => e.StartsAtUtc)
+        };
+        return query.ToListAsync(ct);
+    }
+
+    public async Task<PublicStats> GetPublicStatsAsync(CancellationToken ct = default)
+    {
+        var now = DateTime.UtcNow;
+        var upcoming = _db.Events.AsNoTracking().Where(e => e.IsPublished && e.StartsAtUtc > now);
+        var events = await upcoming.CountAsync(ct);
+        var types = await upcoming.Select(e => e.EventType).Distinct().CountAsync(ct);
+        var sold = await _db.TicketTypes.AsNoTracking()
+            .Where(t => _db.Events.Any(e => e.Id == t.EventId && e.IsPublished))
+            .SumAsync(t => (int?)t.Sold, ct) ?? 0;
+        return new PublicStats(events, sold, types);
     }
 
     public Task<Event?> GetPublicAsync(Guid id, CancellationToken ct = default) =>

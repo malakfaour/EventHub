@@ -2,49 +2,91 @@
 @{
     ViewData["Title"] = "My events";
     var now = DateTime.UtcNow;
-    var upcoming = Model.Where(e => e.IsOpen && e.StartsAtUtc > now).OrderBy(e => e.StartsAtUtc).ToList();
+    var show = ViewBag.Show as string;
+    bool IsUpcoming(EventHub.Web.Models.Event e) => e.IsOpen && e.StartsAtUtc > now;
+    bool IsPast(EventHub.Web.Models.Event e) => !e.IsOpen || e.StartsAtUtc <= now;
+    var upcoming = Model.Where(IsUpcoming).OrderBy(e => e.StartsAtUtc).ToList();
     var next = upcoming.FirstOrDefault();
     var drafts = Model.Count(e => e.Status == EventHub.Web.Models.EventStatus.Draft);
+    var past = Model.Count(IsPast);
+    var rows = show switch
+    {
+        "upcoming" => upcoming,
+        "drafts" => Model.Where(e => e.Status == EventHub.Web.Models.EventStatus.Draft).ToList(),
+        "past" => Model.Where(IsPast).OrderByDescending(e => e.StartsAtUtc).ToList(),
+        _ => Model
+    };
+    string Tab(string? key) => show == key ? "active" : "";
+    string TicketsCell(EventHub.Web.Models.Event e)
+    {
+        var total = e.TicketTypes.Sum(t => t.Quantity);
+        return total == 0 ? "" : $"{e.TicketTypes.Sum(t => t.Sold):N0} of {total:N0}";
+    }
 }
 <div class="page-header">
     <div>
-        <div class="crumbs">Workspace / <b>My events</b></div>
         <h1 class="page-title">My events</h1>
-    </div>
-    <div class="page-actions">
-        <a class="btn btn-primary" asp-action="Create"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>New event</a>
+        <p class="page-sub">Plan each event, list what it needs and order from suppliers.</p>
     </div>
 </div>
 
 <div class="stat-grid">
-    <div class="stat-card"><span class="stat-label">Upcoming events</span><span class="stat-value">@upcoming.Count</span><span class="stat-meta">@(next is null ? "Nothing scheduled" : $"Next: {next.Name} · {next.StartsAtUtc:d MMM}")</span></div>
-    <div class="stat-card"><span class="stat-label">Drafts</span><span class="stat-value">@drafts</span><span class="stat-meta">Not yet marked as planned</span></div>
+    <div class="stat-card"><span class="stat-label">Upcoming</span><span class="stat-value">@upcoming.Count</span><span class="stat-meta">@(next is null ? "Nothing scheduled" : $"Next: {next.Name}, {next.StartsAtUtc:d MMM}")</span></div>
+    <div class="stat-card @(drafts > 0 ? "is-warn" : "")"><span class="stat-label">Drafts</span><span class="stat-value">@drafts</span><span class="stat-meta">Not marked as planned yet</span></div>
     <div class="stat-card"><span class="stat-label">Needs listed</span><span class="stat-value">@upcoming.Sum(e => e.Requirements.Count)</span><span class="stat-meta">Across upcoming events</span></div>
-    <div class="stat-card is-accent"><span class="stat-label">Guests expected</span><span class="stat-value">@upcoming.Sum(e => e.ExpectedGuests)</span><span class="stat-meta">Across upcoming events</span></div>
+    <div class="stat-card"><span class="stat-label">Guests expected</span><span class="stat-value">@upcoming.Sum(e => e.ExpectedGuests).ToString("N0")</span><span class="stat-meta">Across upcoming events</span></div>
 </div>
 
 <section class="panel">
-    <div class="panel-head"><h2>All events</h2><span class="panel-note">@Model.Count events</span></div>
+    <div class="panel-head">
+        <nav class="tabs" aria-label="Filter events">
+            <a class="@Tab(null)" asp-action="Index" aria-current="@(show is null ? "page" : null)">All<span>@Model.Count</span></a>
+            <a class="@Tab("upcoming")" asp-action="Index" asp-route-show="upcoming" aria-current="@(show == "upcoming" ? "page" : null)">Upcoming<span>@upcoming.Count</span></a>
+            <a class="@Tab("drafts")" asp-action="Index" asp-route-show="drafts" aria-current="@(show == "drafts" ? "page" : null)">Drafts<span>@drafts</span></a>
+            <a class="@Tab("past")" asp-action="Index" asp-route-show="past" aria-current="@(show == "past" ? "page" : null)">Past and cancelled<span>@past</span></a>
+        </nav>
+    </div>
     @if (!Model.Any())
     {
-        <div class="empty-state"><strong>No events yet</strong>Create your first event, then add what it needs.</div>
+        <div class="empty-state">
+            <strong>No events yet</strong>
+            <span>Create your first event, then list what it needs from suppliers.</span>
+            <a class="btn btn-primary" asp-action="Create">New event</a>
+        </div>
+    }
+    else if (!rows.Any())
+    {
+        <div class="empty-state"><strong>Nothing here</strong><span>No events in this list. <a asp-action="Index">Show all events</a></span></div>
     }
     else
     {
         <div class="table-wrap">
         <table class="table table-hover">
-            <thead><tr><th>Event</th><th>Date (UTC)</th><th>Venue</th><th class="num">Guests</th><th>Needs</th><th>Status</th><th></th></tr></thead>
+            <thead><tr><th>Event</th><th>Date (UTC)</th><th>Status</th><th>Tickets sold</th><th class="num">Guests</th><th>Needs</th><th><span class="visually-hidden">Open</span></th></tr></thead>
             <tbody>
-            @foreach (var e in Model)
+            @foreach (var e in rows)
             {
+                var total = e.TicketTypes.Sum(t => t.Quantity);
+                var pct = total == 0 ? 0 : (int)Math.Round(100.0 * e.TicketTypes.Sum(t => t.Sold) / total);
                 <tr data-href="@Url.Action("Details", new { id = e.Id })">
-                    <td><div class="with-tile"><span class="date-tile"><small>@e.StartsAtUtc.ToString("MMM")</small><b>@e.StartsAtUtc.ToString("dd")</b></span><span class="cell-title">@e.Name</span></div></td>
-                    <td class="text-muted">@e.StartsAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
-                    <td>@e.Venue</td>
-                    <td class="num">@e.ExpectedGuests</td>
-                    <td>@e.Requirements.Count categories</td>
-                    <td><partial name="_StatusBadge" model="@e.Status.ToString()" /></td>
-                    <td class="text-end"><a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@e.Id">Open</a></td>
+                    <td>
+                        <div class="with-tile">
+                            <span class="swatch @EventTypes.Css(e.EventType)" title="@e.EventType" aria-hidden="true"></span>
+                            <span><span class="cell-title">@e.Name</span><span class="cell-sub">@e.Venue</span></span>
+                        </div>
+                    </td>
+                    <td>@e.StartsAtUtc.ToString("ddd d MMM, HH:mm")</td>
+                    <td>
+                        <partial name="_StatusBadge" model="@e.Status.ToString()" />
+                        @if (e.IsPublished) { <span class="status status-green">On sale</span> }
+                    </td>
+                    <td>
+                        @if (total == 0) { <span class="text-muted">Not on sale</span> }
+                        else { <span class="meter"><span class="meter-track"><span class="meter-fill" style="width:@(pct)%"></span></span><span class="text-muted">@TicketsCell(e)</span></span> }
+                    </td>
+                    <td class="num">@e.ExpectedGuests.ToString("N0")</td>
+                    <td>@(e.Requirements.Count == 0 ? "None yet" : $"{e.Requirements.Count} categor{(e.Requirements.Count == 1 ? "y" : "ies")}")</td>
+                    <td class="text-end"><a class="btn btn-sm btn-outline-secondary" asp-action="Details" asp-route-id="@e.Id">Open</a></td>
                 </tr>
             }
             </tbody>

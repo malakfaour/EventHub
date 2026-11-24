@@ -112,3 +112,55 @@ public class PayInvoiceViewModel
     [Required, StringLength(4, MinimumLength = 3), Display(Name = "Security code")]
     public string Cvv { get; set; } = "";
 }
+
+/// <summary>Filters and sort order for the public Discover page. Every value comes from the query string.</summary>
+public sealed class DiscoverQuery
+{
+    public const string WhenToday = "today", WhenWeek = "week", WhenMonth = "month";
+    public const string PriceFree = "free", PricePaid = "paid";
+    public const string SortDate = "date", SortPopular = "popular", SortPrice = "price";
+
+    [StringLength(100)]
+    public string? Search { get; set; }
+    public string? Type { get; set; }
+    /// <summary>today, week (next 7 days), month (next 30 days) or empty for any date.</summary>
+    public string? When { get; set; }
+    /// <summary>free (has a free ticket type), paid (every ticket type has a price) or empty.</summary>
+    public string? Price { get; set; }
+    /// <summary>date (soonest first, default), popular (most tickets sold) or price (cheapest first).</summary>
+    public string? Sort { get; set; }
+
+    public bool HasFilters => !string.IsNullOrWhiteSpace(Search) || !string.IsNullOrWhiteSpace(Type)
+                              || !string.IsNullOrWhiteSpace(When) || !string.IsNullOrWhiteSpace(Price);
+}
+
+/// <summary>Headline numbers for the Discover hero, counted over every upcoming published event.</summary>
+public sealed record PublicStats(int UpcomingEvents, int TicketsSold, int EventTypes);
+
+public sealed class DiscoverViewModel
+{
+    public DiscoverQuery Query { get; init; } = new();
+    public List<EventHub.Web.Models.Event> Events { get; init; } = [];
+    public PublicStats Stats { get; init; } = new(0, 0, 0);
+}
+
+/// <summary>The public Contact form. Website is a honeypot: people never see it, bots fill it in.</summary>
+public sealed class ContactFormViewModel
+{
+    [Required(ErrorMessage = "Tell us your name."), StringLength(100), Display(Name = "Your name")]
+    public string Name { get; set; } = "";
+
+    [Required(ErrorMessage = "We need an email to reply to."), EmailAddress(ErrorMessage = "Enter a valid email address."), StringLength(200)]
+    public string Email { get; set; } = "";
+
+    [Required, Display(Name = "What is it about?")]
+    public string Topic { get; set; } = EventHub.Web.Models.ContactTopics.Tickets;
+
+    [Required(ErrorMessage = "Write your message."), StringLength(4000, MinimumLength = 10, ErrorMessage = "Write at least 10 characters."), Display(Name = "Message")]
+    public string Message { get; set; } = "";
+
+    public string? Website { get; set; }
+}
+
+/// <summary>Real numbers for the About page.</summary>
+public sealed record AboutStats(int UpcomingEvents, int TicketsSold, int Suppliers, int Organizers);

@@ -4,6 +4,8 @@
     string Active(bool on) => on ? "side-link active" : "side-link";
     var userName = User.Identity?.Name ?? "";
     var initials = userName.Length >= 2 ? userName[..2] : userName;
+    var supplierName = User.FindFirst(SupplierSystem.Web.Services.StaffClaimsFactory.SupplierNameClaim)?.Value;
+    var supplierCategory = User.FindFirst(SupplierSystem.Web.Services.StaffClaimsFactory.SupplierCategoryClaim)?.Value;
     var role = User.IsInRole(Roles.PlatformAdmin) ? "Platform admin"
              : User.IsInRole(Roles.SupplierManager) ? "Supplier manager"
              : User.IsInRole(Roles.SupplierStaff) ? "Supplier staff" : "Staff";
@@ -16,20 +18,38 @@
     <title>@ViewData["Title"] - Supplier System</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,900&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/theme.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <partial name="_ThemeBoot" />
 </head>
 <body class="theme-supplier" data-controller="@controller?.ToLowerInvariant()" data-action="@ViewContext.RouteData.Values["action"]?.ToString()?.ToLowerInvariant()">
 @if (signedIn)
 {
     <div class="app">
         <aside class="sidebar">
+            <div class="d-flex align-items-center">
             <a class="brand" asp-controller="Orders" asp-action="Index">
                 <span class="brand-mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg></span>
                 <span><span class="brand-name">Supplier System</span><span class="brand-sub">Staff workspace</span></span>
             </a>
+            <button type="button" class="icon-btn sidebar-close" data-nav-close aria-label="Close menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+            </div>
+            @if (supplierName is not null)
+            {
+                <div class="supplier-chip @CategoryStyle.Css(supplierCategory)">
+                    <span class="supplier-ink" aria-hidden="true"></span>
+                    <span><strong>@supplierName</strong><small>@SupplyCategories.DisplayName(supplierCategory ?? "")</small></span>
+                </div>
+            }
+            else if (User.IsInRole(Roles.PlatformAdmin))
+            {
+                <div class="supplier-chip cat-all">
+                    <span class="supplier-ink" aria-hidden="true"></span>
+                    <span><strong>All suppliers</strong><small>Platform view</small></span>
+                </div>
+            }
             <nav class="side-nav" aria-label="Main">
                 <span class="nav-section">Work</span>
                 <a class="@Active(controller == "Orders")" asp-controller="Orders" asp-action="Index">
@@ -59,10 +79,19 @@
                 </form>
             </div>
         </aside>
-        <main class="main" role="main">
-            <partial name="_Alerts" />
-            @RenderBody()
-        </main>
+        <div class="nav-backdrop" data-nav-close aria-hidden="true"></div>
+        <div class="main-col">
+            <header class="topbar">
+                <button type="button" class="tb-btn tb-menu" data-nav-open aria-expanded="false" aria-label="Open menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+                <div class="topbar-title">@role / <strong>@ViewData["Title"]</strong></div>
+                <span class="topbar-spacer"></span>
+                <partial name="_ThemeToggle" />
+            </header>
+            <main class="main" role="main" id="main">
+                <partial name="_Alerts" />
+                @RenderBody()
+            </main>
+        </div>
     </div>
 }
 else
@@ -90,6 +119,7 @@ else
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/ui.js" asp-append-version="true"></script>
     @if (signedIn)
     {
         <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>

@@ -15,9 +15,11 @@ public class AdminController : Controller
     private readonly IAdminRepository _repo;
     private readonly UserManager<AppUser> _users;
     private readonly ILogger<AdminController> _logger;
+    private readonly IContactService _contact;
 
-    public AdminController(IAdminService admin, IAdminRepository repo, UserManager<AppUser> users, ILogger<AdminController> logger)
+    public AdminController(IAdminService admin, IAdminRepository repo, UserManager<AppUser> users, ILogger<AdminController> logger, IContactService contact)
     {
+        _contact = contact;
         _admin = admin;
         _repo = repo;
         _users = users;
@@ -73,6 +75,24 @@ public class AdminController : Controller
     {
         ViewBag.Status = status;
         return View(await _repo.GetMessagesAsync(status, ct));
+    }
+
+    /// <summary>Messages sent from the public Contact page. show: open (default), handled or all.</summary>
+    public async Task<IActionResult> Inbox(string? show, CancellationToken ct)
+    {
+        show = show is "handled" or "all" ? show : "open";
+        ViewBag.Show = show;
+        ViewBag.OpenCount = await _contact.CountOpenAsync(ct);
+        return View(await _contact.ListAsync(show switch { "handled" => false, "all" => null, _ => true }, ct));
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> SetHandled(Guid id, bool handled, string? show, CancellationToken ct)
+    {
+        var ok = await _contact.SetHandledAsync(id, handled, User.Identity?.Name ?? "admin", ct);
+        if (!ok) return NotFound();
+        TempData["Success"] = handled ? "Message marked as handled." : "Message moved back to open.";
+        return RedirectToAction(nameof(Inbox), new { show });
     }
 
     public async Task<IActionResult> ExportExcel(CancellationToken ct) =>

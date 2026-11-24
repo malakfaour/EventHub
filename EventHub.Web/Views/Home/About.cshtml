@@ -1,0 +1,75 @@
+@model EventHub.Web.ViewModels.AboutStats
+@{
+    ViewData["Title"] = "About us";
+    Layout = "_PublicLayout";
+}
+
+<section class="pub-wrap page-hero">
+    <div>
+        <h1>From the first idea to the last ticket.</h1>
+        <p class="lead-text">Event Hub is where the city plans its nights out. Organizers build their event, order catering, decoration and sound from local suppliers, and sell tickets in one place. Guests find something to do and keep their pass on their phone.</p>
+        <div class="d-flex flex-wrap gap-2">
+            <a class="btn btn-primary" asp-controller="Discover" asp-action="Index">See what's on</a>
+            <a class="btn btn-outline-secondary" asp-controller="Account" asp-action="Register">Create an account</a>
+        </div>
+    </div>
+    <div class="poster-stack" aria-hidden="true">
+        <span class="stack-tile cover-conference">Talks</span>
+        <span class="stack-tile cover-sports">Sports</span>
+        <span class="stack-tile cover-music">Music</span>
+    </div>
+</section>
+
+<section class="ruled-section">
+    <div class="pub-wrap">
+        <h2>Three kinds of people, one place</h2>
+        <div class="audience-grid">
+            <article class="audience cover-music">
+                <h3>Going out</h3>
+                <p>Browse what is on, compare ticket types and pay in a few steps. Your tickets live in My tickets with a QR code for the door.</p>
+                <a asp-controller="Discover" asp-action="Index">Find an event</a>
+            </article>
+            <article class="audience cover-conference">
+                <h3>Organizing</h3>
+                <p>Create an event, list what it needs and order from suppliers who specialize in it. Follow every order from accepted to delivered.</p>
+                <a asp-controller="Account" asp-action="Register">Start organizing</a>
+            </article>
+            <article class="audience cover-food">
+                <h3>Supplying</h3>
+                <p>Caterers, decorators and sound crews keep their catalog and stock in the Supplier System and receive orders the moment they are placed.</p>
+                <a href="/contact?topic=@Uri.EscapeDataString(EventHub.Web.Models.ContactTopics.Suppliers)">Become a supplier</a>
+            </article>
+        </div>
+    </div>
+</section>
+
+<section class="ruled-section">
+    <div class="pub-wrap">
+        <h2>How an event comes together</h2>
+        <ol class="step-row">
+            <li><b>Plan</b><span>The organizer sets the date, the venue and how many guests to expect.</span></li>
+            <li><b>Order</b><span>Each need, like catering or sound, goes to a supplier in that category.</span></li>
+            <li><b>Sell</b><span>Ticket types go on sale on the Discover page, each with its own price and stock.</span></li>
+            <li><b>Go</b><span>Guests show the QR code on their pass at the door.</span></li>
+        </ol>
+    </div>
+</section>
+
+<section class="ruled-section">
+    <div class="pub-wrap">
+        <h2>Event Hub today</h2>
+        <dl class="fact-strip">
+            <div><dt>Events on sale</dt><dd>@Model.UpcomingEvents.ToString("N0")</dd></div>
+            <div><dt>Tickets sold</dt><dd>@Model.TicketsSold.ToString("N0")</dd></div>
+            <div><dt>Suppliers to order from</dt><dd>@Model.Suppliers.ToString("N0")</dd></div>
+            <div><dt>Organizers</dt><dd>@Model.Organizers.ToString("N0")</dd></div>
+        </dl>
+    </div>
+</section>
+
+<section class="contact-band">
+    <div class="pub-wrap">
+        <p>Questions about tickets, organizing or selling as a supplier?</p>
+        <a class="btn btn-primary btn-lg" asp-controller="Home" asp-action="Contact">Contact us</a>
+    </div>
+</section>

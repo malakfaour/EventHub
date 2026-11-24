@@ -25,6 +25,7 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
     public DbSet<ProcessedMessage> ProcessedMessages => Set<ProcessedMessage>();
     public DbSet<MessageLogRow> MessageLog => Set<MessageLogRow>();
+    public DbSet<ContactMessage> ContactMessages => Set<ContactMessage>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -149,6 +150,17 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>
             e.Ignore(x => x.Number);
             e.HasOne(x => x.Order).WithMany().HasForeignKey(x => x.OrderId).OnDelete(DeleteBehavior.Restrict);
             e.HasIndex(x => x.OrderId).IsUnique();
+        });
+
+        builder.Entity<ContactMessage>(e =>
+        {
+            e.Property(x => x.Name).HasMaxLength(100);
+            e.Property(x => x.Email).HasMaxLength(200);
+            e.Property(x => x.Topic).HasMaxLength(50);
+            e.Property(x => x.Message).HasMaxLength(4000);
+            e.Property(x => x.HandledBy).HasMaxLength(200);
+            e.Ignore(x => x.IsOpen);
+            e.HasIndex(x => x.HandledAtUtc);
         });
     }
 }

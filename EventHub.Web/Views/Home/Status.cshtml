@@ -1,0 +1,30 @@
+@model int
+@{
+    // Friendly status page. Signed-in workspace users keep their sidebar; everyone else sees the public site.
+    var workspace = User.Identity?.IsAuthenticated == true && !User.IsInRole(Roles.Client);
+    Layout = workspace ? "_Layout" : "_PublicLayout";
+    var (title, text) = Model switch
+    {
+        404 => ("This page isn't here.", "The link may be old, or the event may have been taken down."),
+        403 => ("You can't open this page.", "Your account doesn't have access to it. Sign in with a different account if you have one."),
+        429 => ("Too many tries in a row.", "Wait a minute, then try again."),
+        _ => ("Something went wrong.", "Try again in a moment. If it keeps happening, let us know on the Contact page.")
+    };
+    ViewData["Title"] = title.TrimEnd('.');
+}
+<section class="@(workspace ? "status-page is-workspace" : "pub-wrap status-page")">
+    <span class="status-code">@Model</span>
+    <h1>@title</h1>
+    <p>@text</p>
+    <div class="d-flex flex-wrap gap-2 justify-content-center">
+        @if (workspace)
+        {
+            <a class="btn btn-primary" asp-controller="Home" asp-action="Index">Back to my workspace</a>
+        }
+        else
+        {
+            <a class="btn btn-primary" asp-controller="Discover" asp-action="Index">See what's on</a>
+            <a class="btn btn-outline-secondary" asp-controller="Home" asp-action="Contact">Contact us</a>
+        }
+    </div>
+</section>

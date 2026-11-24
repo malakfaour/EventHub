@@ -11,7 +11,7 @@
 
     <div class="checkout-grid">
         <div class="panel checkout-summary">
-            <div class="mini-cover @EventTypes.Css(ev.EventType)"><span class="cover-icon">@EventTypes.Icon(ev.EventType)</span></div>
+            <div class="mini-cover @EventTypes.Css(ev.EventType)" aria-hidden="true"><div class="poster-date"><span class="poster-day">@ev.StartsAtUtc.ToString("dd")</span><span class="poster-month"><b>@ev.StartsAtUtc.ToString("MMMM")</b>@ev.StartsAtUtc.ToString("dddd, HH:mm")</span></div></div>
             <div class="panel-body">
                 <span class="type-pill">@ev.EventType</span>
                 <h2 class="h4 mt-2">@ev.Name</h2>

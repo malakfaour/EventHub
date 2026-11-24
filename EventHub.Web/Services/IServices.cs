@@ -48,7 +48,8 @@ public interface ICatalogService
 
 public interface ITicketService
 {
-    Task<List<Event>> ListPublicAsync(string? search, string? type, CancellationToken ct = default);
+    Task<List<Event>> ListPublicAsync(DiscoverQuery query, CancellationToken ct = default);
+    Task<PublicStats> GetPublicStatsAsync(CancellationToken ct = default);
     Task<Event?> GetPublicAsync(Guid eventId, CancellationToken ct = default);
 
     /// <summary>Reserves the tickets, charges the card, and issues the tickets. Throws InvalidOperationException with a readable reason.</summary>
