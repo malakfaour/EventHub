@@ -402,6 +402,7 @@ textarea.form-control { min-height: 88px; }
 .live-toast span { font-size: 13px; color: var(--muted); }
 .live-toast.out { opacity: 0; transform: translateY(8px); }
 
+<<<<<<< HEAD
 /* ---- Dark mode: Bootstrap pieces that do not read our variables ---- */
 html[data-theme="dark"] .modal-content, html[data-theme="dark"] .dropdown-menu, html[data-theme="dark"] .list-group-item { background: var(--surface); color: var(--text); border-color: var(--border); }
 html[data-theme="dark"] .bg-white, html[data-theme="dark"] .bg-light { background-color: var(--surface) !important; }
@@ -493,3 +494,8 @@ html[data-theme="dark"] .stat-card[class*="tone-"] .stat-value { color: var(--te
 
 /* A colored band on top of an order page shows the supplier's category */
 .cat-band { height: 6px; border-radius: 3px; background: var(--cover); margin-bottom: 18px; }
+=======
+/* Report charts */
+.chart-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 24px; }
+.chart-box { height: 280px; position: relative; }
+>>>>>>> origin/main

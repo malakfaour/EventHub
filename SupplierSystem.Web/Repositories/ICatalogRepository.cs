@@ -11,6 +11,7 @@ public interface ICatalogRepository
     Task<Product?> GetProductAsync(Guid id, CancellationToken ct = default);
     Task<List<Product>> GetProductsAsync(IReadOnlyCollection<Guid> ids, CancellationToken ct = default);
     Task AddProductAsync(Product product, CancellationToken ct = default);
+    Task AddSupplierAsync(Supplier supplier, CancellationToken ct = default);
     Task SaveChangesAsync(CancellationToken ct = default);
 
     /// <summary>Runs the work and commits everything it saved (data and outbox rows) as one transaction.</summary>

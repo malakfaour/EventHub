@@ -8,6 +8,7 @@
     var dueSoon = Model.Where(o => o.Status is SupplyOrderStatus.Accepted or SupplyOrderStatus.Preparing or SupplyOrderStatus.Dispatched
                                    && o.DeliveryAtUtc >= DateTime.UtcNow && o.DeliveryAtUtc <= weekEnd)
                        .OrderBy(o => o.DeliveryAtUtc).ToList();
+    var isAdmin = User.IsInRole(Roles.PlatformAdmin);
     string NextStep(SupplyOrderStatus s) => s switch
     {
         SupplyOrderStatus.Received => "Accept",
@@ -24,6 +25,10 @@
         <div class="crumbs">Workspace / <b>Orders</b></div>
         <h1 class="page-title">Incoming orders</h1>
     </div>
+    @if (!User.IsInRole(Roles.PlatformAdmin))
+    {
+        <div class="page-actions"><a class="btn btn-primary" asp-action="Create">New manual order</a></div>
+    }
 </div>
 
 <div class="stat-grid">
@@ -62,7 +67,7 @@
                     <td>@o.DeliveryAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
                     <td class="num fw-semibold">@o.Total.ToString("N2")</td>
                     <td><partial name="_StatusBadge" model="o.Status" /></td>
-                    <td class="text-end"><a class="btn btn-sm @(NeedsAction(o.Status) ? "btn-primary" : "btn-outline-primary") text-nowrap" asp-action="Details" asp-route-id="@o.Id">@NextStep(o.Status)</a></td>
+                    <td class="text-end"><a class="btn btn-sm @(NeedsAction(o.Status) && !isAdmin ? "btn-primary" : "btn-outline-primary") text-nowrap" asp-action="Details" asp-route-id="@o.Id">@(isAdmin ? "View" : NextStep(o.Status))</a></td>
                 </tr>
             }
             </tbody>

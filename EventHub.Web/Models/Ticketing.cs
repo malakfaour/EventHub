@@ -52,4 +52,13 @@ public class Ticket
     public string Code { get; set; } = "";
     public string HolderName { get; set; } = "";
     public DateTime? UsedAtUtc { get; set; }
+
+    public bool IsUsed => UsedAtUtc is not null;
+
+    /// <summary>Marks the ticket as used at the door. A ticket can only be used once.</summary>
+    public void CheckIn()
+    {
+        if (IsUsed) throw new InvalidOperationException($"Already used at {UsedAtUtc:HH:mm} UTC.");
+        UsedAtUtc = DateTime.UtcNow;
+    }
 }

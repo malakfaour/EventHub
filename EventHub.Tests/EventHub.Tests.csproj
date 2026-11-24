@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
@@ -22,6 +22,8 @@
   <ItemGroup>
     <ProjectReference Include="..\EventHub.Contracts\EventHub.Contracts.csproj" />
     <ProjectReference Include="..\EventHub.Messaging\EventHub.Messaging.csproj" />
+    <ProjectReference Include="..\EventHub.Web\EventHub.Web.csproj" />
+    <ProjectReference Include="..\SupplierSystem.Web\SupplierSystem.Web.csproj" />
   </ItemGroup>
 
 </Project>

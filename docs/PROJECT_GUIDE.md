@@ -96,6 +96,7 @@ Legend: **Verified** = run and checked by hand. **Written** = implemented, build
 | AI suggestion of event needs (Gemini or Claude API, rules as fallback) | Verified | Needs an API key, see section 3 |
 | Clickable table rows | Verified | |
 | Docker for the infrastructure (RabbitMQ, SQL Server) | Verified | |
+| Supplier reports, manual orders, supplier/staff admin, guest list, check-in, unit tests, Docker for the apps | Written | See section 7 |
 
 ### Brief coverage
 
@@ -105,7 +106,7 @@ Legend: **Verified** = run and checked by hand. **Written** = implemented, build
 | Service and repository layers | `Services/`, `Repositories/` in both apps |
 | Reliable messaging (RabbitMQ) | `EventHub.Messaging`, `EventHub.Contracts` |
 | SignalR | `Hubs/LiveHub.cs`, `wwwroot/js/live.js`, notifier services |
-| Reports with Chart.js, PDF and Excel export | Event Hub `AdminController`, `Views/Admin/Index.cshtml`, `Services/ReportExporter.cs` (supplier-side reports not built yet) |
+| Reports with Chart.js, PDF and Excel export | Event Hub `AdminController`, `Views/Admin/Index.cshtml`, `Services/ReportExporter.cs` and the Supplier System `ReportsController` |
 | AI API | `EventHub.Web/Services/Ai/EventAdvisor.cs` |
 | Payment gateway | `IPaymentGateway` / `FakePaymentGateway` (tickets and invoices) |
 | Roles and authorization | Identity roles, `[Authorize]`, supplier scoping by claim |
@@ -279,36 +280,30 @@ docs/PROJECT_GUIDE.md   this file
 
 ---
 
-## 7. What is left
+## 7. What is left and new features to test
 
-Ordered by value for the grade.
+### Added in the last round (written, run the checks below)
+| Feature | Where | How to check |
+|---|---|---|
+| Supplier reports (4 Chart.js charts, Excel and PDF export) | Supplier System, **Reports** in the menu | Sign in as `manager.royal@supplier.local`, open Reports, download both files. The platform admin sees all suppliers. |
+| Manual orders | Supplier System, Orders, **New manual order** | Create one with 2 items; accept it; deliver it; **Mark as paid** on the details page. Nothing is sent to the Event Hub. |
+| Supplier admin screens | Platform admin: **Manage suppliers** (create supplier + manager, activate/deactivate). Manager: **Team** (add staff, enable/disable). | Create a supplier, sign in as its manager, add a staff member, sign in as staff (cannot edit the catalog). Deactivate a supplier and look at the Event Hub supplier list: its items are unavailable. |
+| Guest list | Event Hub, event details, **Guests** | Add and remove guests. |
+| Ticket check-in | Event Hub, event details, **Check-in** | Buy a ticket as a client, copy its code from My tickets, enter it: "Welcome". Enter it again: "Already used". |
+| Automated tests | `EventHub.Tests` | `dotnet test` from the repo root. |
+| Docker for the apps | `Dockerfile`, `docker-compose.yml` | `docker compose --profile apps up -d --build` then open ports 5001 and 5002. |
 
-### Must do
-1. **Supplier System reports**: Chart.js dashboard (orders per month, revenue per product, acceptance rate) with PDF and Excel export, as the Event Hub admin has.
-2. **Manual orders in the Supplier System**, so it is useful on its own (a supplier records a phone order; `OrderSource.Manual` already exists in the model, and manual orders skip the notifications).
-3. **Supplier admin screens**: create suppliers and staff accounts (today they are seeded).
-4. **Automated tests** (`EventHub.Tests` is still the template): state transitions on `SupplyOrder`, stock reserve/release, `MessageRoutes`, idempotency, ticket purchase with a fake gateway, and one integration test of outbox publishing.
-5. **Finish the manual test run** in section 4 (sections C8, D, E, H are the least tested) and fix what you find.
-
-### Should do
-6. **Guest list UI** in the Event Hub (the `Guest` model exists, there are no screens).
-7. **Docker for the apps**: add the two apps to `docker-compose.yml` (Dockerfiles, connection strings and RabbitMQ host as environment variables) so `docker compose up` runs everything.
-8. **Ticket check-in**: `Ticket.UsedAtUtc` exists; add a scan or validate screen that reads the QR code.
-9. **Invoice extras**: overdue reminders, show invoices on the admin pages and reports, supplier invoice PDF.
+### Still open
+1. **Finish the manual test run** in section 4 (C8, D, E, H are the least tested), plus the new features above.
+2. **Invoice extras**: overdue reminders and a supplier invoice PDF (overdue is already computed on the invoice).
+3. **Integration test** of the outbox publishing against a real RabbitMQ.
 
 ### Nice to have / known limitations
-- Admin cannot manage suppliers or catalogs (by design, that belongs to the Supplier System).
+- Admin cannot manage catalogs (by design, that belongs to each supplier).
 - A disabled user who is already signed in keeps the session for up to about 30 minutes; sign-in is blocked immediately.
 - Two simultaneous clicks on Pay could both reach the fake gateway; only one invoice payment is saved (row version), but a real gateway would need an idempotency key.
 - Emails are not sent (no SMTP); notifications are in-app only.
 - HTTPS and production secrets are not configured; connection strings in `appsettings.json` are demo defaults matching `docker-compose.yml`.
+- Check-in is by typed code; scanning the QR with a camera is not built.
 
-### Suggested split between teammates
-| Person | Work |
-|---|---|
-| A | Supplier reports and charts (item 1), manual orders (item 2) |
-| B | Supplier admin screens (item 3), guest list UI (item 6) |
-| C | Tests (item 4), Docker for the apps (item 7) |
-| Everyone | Section 4 test run, rehearsing section 5 |
-
-Work on branches (`feature/<name>`), small pull requests, and rebuild plus run the section 4 smoke tests before merging.
+Work on branches (`feature/<name>`), small pull requests, and rebuild plus run `dotnet test` and the section 4 smoke tests before merging.

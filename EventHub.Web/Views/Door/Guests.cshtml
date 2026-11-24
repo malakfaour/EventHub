@@ -1,0 +1,39 @@
+@model EventHub.Web.Models.Event
+@{ ViewData["Title"] = "Guest list"; var total = Model.Guests.Sum(g => g.PartySize); }
+<a class="back-link" asp-controller="Events" asp-action="Details" asp-route-id="@Model.Id">&larr; @Model.Name</a>
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Guest list</h1>
+        <p class="page-sub">@Model.Guests.Count invitations, @total people expected (planned: @Model.ExpectedGuests).</p>
+    </div>
+    <div class="page-actions"><a class="btn btn-outline-primary" asp-action="CheckIn" asp-route-id="@Model.Id">Open check-in</a></div>
+</div>
+<section class="panel">
+    <form asp-action="AddGuest" asp-route-id="@Model.Id" method="post" class="panel-body row g-2 align-items-end">
+        <div class="col-md-4"><label class="form-label">Name</label><input name="name" class="form-control" required maxlength="100" /></div>
+        <div class="col-md-4"><label class="form-label">Email (optional)</label><input name="email" type="email" class="form-control" maxlength="200" /></div>
+        <div class="col-md-2"><label class="form-label">People</label><input name="partySize" type="number" min="1" max="20" value="1" class="form-control" /></div>
+        <div class="col-md-2"><button class="btn btn-primary w-100">Add guest</button></div>
+    </form>
+</section>
+<section class="panel mt-3">
+    @if (!Model.Guests.Any())
+    {
+        <div class="empty-state"><strong>No guests yet</strong>Add the people you invited.</div>
+    }
+    else
+    {
+        <div class="table-wrap"><table class="table table-hover">
+            <thead><tr><th>Name</th><th>Email</th><th class="num">People</th><th></th></tr></thead>
+            <tbody>
+            @foreach (var g in Model.Guests.OrderBy(g => g.Name))
+            {
+                <tr>
+                    <td class="cell-title">@g.Name</td><td>@g.Email</td><td class="num">@g.PartySize</td>
+                    <td class="text-end"><form asp-action="RemoveGuest" asp-route-id="@Model.Id" asp-route-guestId="@g.Id" method="post"><button class="btn btn-sm btn-outline-danger">Remove</button></form></td>
+                </tr>
+            }
+            </tbody>
+        </table></div>
+    }
+</section>

@@ -64,6 +64,35 @@ public class SupplyOrder
         };
     }
 
+    /// <summary>An order entered by staff (a phone call or walk-in). It has no Event Hub counterpart, so nothing is sent.</summary>
+    public static SupplyOrder CreateManual(Guid supplierId, Guid customerId, string eventName, DateTime deliveryAtUtc,
+        string deliveryAddress, string? notes, IEnumerable<(Guid ProductId, string Name, string Unit, int Quantity, decimal UnitPrice)> items)
+    {
+        var id = Guid.NewGuid();
+        var lines = items.Select(i => new SupplyOrderLine
+        {
+            Id = Guid.NewGuid(), OrderId = id, ProductId = i.ProductId, Name = i.Name, Unit = i.Unit,
+            Quantity = i.Quantity, UnitPrice = i.UnitPrice
+        }).ToList();
+        if (lines.Count == 0) throw new InvalidOperationException("Choose at least one item.");
+
+        return new SupplyOrder
+        {
+            Id = id,
+            ExternalOrderId = null,
+            SupplierId = supplierId,
+            CustomerId = customerId,
+            EventName = eventName,
+            Source = OrderSource.Manual,
+            DeliveryAtUtc = deliveryAtUtc,
+            DeliveryAddress = deliveryAddress,
+            Notes = notes,
+            Lines = lines,
+            Total = lines.Sum(l => l.Quantity * l.UnitPrice),
+            ReceivedAtUtc = DateTime.UtcNow
+        };
+    }
+
     public void Accept()
     {
         Require(Status == SupplyOrderStatus.Received, "accepted");

@@ -1,0 +1,38 @@
+@model SupplierSystem.Web.ViewModels.NewSupplierViewModel
+@{ ViewData["Title"] = "New supplier"; }
+<a class="back-link" asp-action="Index">&larr; Suppliers</a>
+<div class="page-header">
+    <div>
+        <h1 class="page-title">New supplier</h1>
+        <p class="page-sub">Creates the company and its manager account. The manager adds products and staff after signing in.</p>
+    </div>
+</div>
+<section class="panel form-narrow">
+    <form method="post" class="panel-body">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+        <h2 class="panel-title mb-3">Company</h2>
+        <div class="mb-3"><label asp-for="Name" class="form-label"></label><input asp-for="Name" class="form-control" /><span asp-validation-for="Name" class="text-danger"></span></div>
+        <div class="row g-3 mb-4">
+            <div class="col-md-6">
+                <label asp-for="Category" class="form-label"></label>
+                <select asp-for="Category" class="form-select">
+                    <option value="">Choose...</option>
+                    @foreach (var c in SupplyCategories.All) { <option value="@c">@SupplyCategories.DisplayName(c)</option> }
+                </select>
+                <span asp-validation-for="Category" class="text-danger"></span>
+            </div>
+            <div class="col-md-6"><label asp-for="ContactEmail" class="form-label"></label><input asp-for="ContactEmail" class="form-control" /><span asp-validation-for="ContactEmail" class="text-danger"></span></div>
+        </div>
+        <h2 class="panel-title mb-3">Manager account</h2>
+        <div class="mb-3"><label asp-for="ManagerName" class="form-label"></label><input asp-for="ManagerName" class="form-control" /><span asp-validation-for="ManagerName" class="text-danger"></span></div>
+        <div class="row g-3 mb-3">
+            <div class="col-md-6"><label asp-for="ManagerEmail" class="form-label"></label><input asp-for="ManagerEmail" class="form-control" /><span asp-validation-for="ManagerEmail" class="text-danger"></span></div>
+            <div class="col-md-6"><label asp-for="ManagerPassword" class="form-label"></label><input asp-for="ManagerPassword" class="form-control" autocomplete="new-password" /><span asp-validation-for="ManagerPassword" class="text-danger"></span></div>
+        </div>
+        <div class="form-actions">
+            <button class="btn btn-primary">Create supplier</button>
+            <a class="btn btn-link" asp-action="Index">Cancel</a>
+        </div>
+    </form>
+</section>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

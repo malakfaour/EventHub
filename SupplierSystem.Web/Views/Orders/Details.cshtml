@@ -99,6 +99,10 @@
                         <dt>Status</dt><dd>@if (invoice.Status == SupplierSystem.Web.Models.InvoiceStatus.Paid) { <span class="status status-green">Paid</span> } else if (invoice.IsOverdue) { <span class="status status-red">Overdue</span> } else { <span class="status status-amber">Awaiting payment</span> }</dd>
                         @if (invoice.PaidAtUtc is not null) { <dt>Paid</dt><dd>@invoice.PaidAtUtc.Value.ToString("yyyy-MM-dd HH:mm") UTC<span class="cell-sub">@invoice.PaymentReference</span></dd> }
                     </dl>
+                    @if (canProcess && Model.Source == SupplierSystem.Web.Models.OrderSource.Manual && invoice.Status == SupplierSystem.Web.Models.InvoiceStatus.Issued)
+                    {
+                        <form asp-controller="Invoices" asp-action="MarkPaid" method="post"><input type="hidden" name="orderId" value="@Model.Id" /><button class="btn btn-success mt-3">Mark as paid</button></form>
+                    }
                 }
             </div>
         }
@@ -107,7 +111,7 @@
         <div class="panel panel-body mb-0">
             <h2 class="panel-title mb-3">Details</h2>
             <dl class="meta-list" style="grid-template-columns: 100px 1fr">
-                <dt>Organizer</dt><dd>@Model.Customer?.Name<span class="cell-sub">@Model.Customer?.Email</span></dd>
+                <dt>@(Model.Source == SupplierSystem.Web.Models.OrderSource.Manual ? "Customer" : "Organizer")</dt><dd>@Model.Customer?.Name<span class="cell-sub">@Model.Customer?.Email</span></dd>
                 <dt>Deliver to</dt><dd>@Model.DeliveryAddress</dd>
                 <dt>When</dt><dd>@Model.DeliveryAtUtc.ToString("yyyy-MM-dd HH:mm") UTC</dd>
                 <dt>Notes</dt><dd>@(Model.Notes ?? "-")</dd>

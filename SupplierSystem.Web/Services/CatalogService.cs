@@ -94,7 +94,7 @@ public sealed class CatalogService : ICatalogService
     {
         var products = await _repo.ListProductsAsync(supplier.Id, ct);
         var items = products
-            .Select(p => new CatalogItem(p.Id, p.Name, p.Unit, p.Price, p.IsActive && (p.Inventory?.Available ?? 0) > 0))
+            .Select(p => new CatalogItem(p.Id, p.Name, p.Unit, p.Price, supplier.IsActive && p.IsActive && (p.Inventory?.Available ?? 0) > 0))
             .ToList();
 
         _outbox.Enqueue(new CatalogPublished(supplier.Id, supplier.Name, supplier.Category, items)
