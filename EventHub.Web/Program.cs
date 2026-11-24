@@ -76,12 +76,9 @@ builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<ICatalogService, CatalogService>();
 builder.Services.AddScoped<ITicketService, TicketService>();
-<<<<<<< HEAD
 builder.Services.AddScoped<IContactRepository, ContactRepository>();
 builder.Services.AddScoped<IContactService, ContactService>();
-=======
 builder.Services.AddScoped<IDoorService, DoorService>();
->>>>>>> origin/main
 builder.Services.AddSingleton<IPaymentGateway, FakePaymentGateway>();
 
 // Abuse limit: the public contact form accepts 5 messages a minute per IP address.

@@ -12,13 +12,9 @@ public interface IEventRepository
     Task<List<Event>> ListByOrganizerAsync(Guid organizerId, CancellationToken ct = default);
     Task AddRequirementAsync(EventRequirement requirement, CancellationToken ct = default);
     Task AddTicketTypeAsync(TicketType ticketType, CancellationToken ct = default);
-<<<<<<< HEAD
+    Task AddGuestAsync(Guest guest, CancellationToken ct = default);
     Task<List<Event>> ListPublishedAsync(DiscoverQuery query, CancellationToken ct = default);
     Task<PublicStats> GetPublicStatsAsync(CancellationToken ct = default);
-=======
-    Task AddGuestAsync(Guest guest, CancellationToken ct = default);
-    Task<List<Event>> ListPublishedAsync(string? search, string? type, CancellationToken ct = default);
->>>>>>> origin/main
     Task<Event?> GetPublicAsync(Guid id, CancellationToken ct = default);   // published events only, with ticket types
     Task SaveChangesAsync(CancellationToken ct = default);
 }
@@ -76,14 +72,10 @@ public sealed class EventRepository : IEventRepository
     public async Task AddTicketTypeAsync(TicketType ticketType, CancellationToken ct = default) =>
         await _db.TicketTypes.AddAsync(ticketType, ct);
 
-<<<<<<< HEAD
-    public Task<List<Event>> ListPublishedAsync(DiscoverQuery q, CancellationToken ct = default)
-=======
     public async Task AddGuestAsync(Guest guest, CancellationToken ct = default) =>
         await _db.Guests.AddAsync(guest, ct);
 
-    public Task<List<Event>> ListPublishedAsync(string? search, string? type, CancellationToken ct = default)
->>>>>>> origin/main
+    public Task<List<Event>> ListPublishedAsync(DiscoverQuery q, CancellationToken ct = default)
     {
         var now = DateTime.UtcNow;
         var query = _db.Events.AsNoTracking().Include(e => e.TicketTypes)
