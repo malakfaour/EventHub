@@ -32,22 +32,11 @@
 
 @section Scripts {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <script src="~/js/charts.js" asp-append-version="true"></script>
     <script>
-        const palette = ['#0f766e', '#0ea5e9', '#f59e0b', '#ef4444', '#8b5cf6', '#10b981', '#14b8a6', '#ec4899'];
-        function chart(id, type, labels, data, label) {
-            const circular = type === 'doughnut';
-            new Chart(document.getElementById(id), {
-                type: type,
-                data: { labels: labels, datasets: [{ label: label, data: data,
-                    backgroundColor: circular ? palette : palette[0], borderRadius: circular ? 0 : 6 }] },
-                options: { maintainAspectRatio: false,
-                    plugins: { legend: { display: circular, position: 'bottom' } },
-                    scales: circular ? {} : { y: { beginAtZero: true } } }
-            });
-        }
-        chart('cMonth', 'bar', @Html.Raw(Labels(Model.OrdersByMonth)), @Html.Raw(Values(Model.OrdersByMonth)), 'Orders');
-        chart('cStatus', 'doughnut', @Html.Raw(Labels(Model.OrdersByStatus)), @Html.Raw(Values(Model.OrdersByStatus)), 'Orders');
-        chart('cProduct', 'bar', @Html.Raw(Labels(Model.RevenueByProduct)), @Html.Raw(Values(Model.RevenueByProduct)), 'Revenue');
-        chart('cInvoice', 'doughnut', @Html.Raw(Labels(Model.InvoiceAmounts)), @Html.Raw(Values(Model.InvoiceAmounts)), 'Amount');
+        themedChart('cMonth', 'bar', @Html.Raw(Labels(Model.OrdersByMonth)), @Html.Raw(Values(Model.OrdersByMonth)), 'Orders');
+        themedChart('cStatus', 'doughnut', @Html.Raw(Labels(Model.OrdersByStatus)), @Html.Raw(Values(Model.OrdersByStatus)), 'Orders');
+        themedChart('cProduct', 'bar', @Html.Raw(Labels(Model.RevenueByProduct)), @Html.Raw(Values(Model.RevenueByProduct)), 'Revenue');
+        themedChart('cInvoice', 'doughnut', @Html.Raw(Labels(Model.InvoiceAmounts)), @Html.Raw(Values(Model.InvoiceAmounts)), 'Amount');
     </script>
 }
