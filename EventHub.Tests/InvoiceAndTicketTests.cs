@@ -53,4 +53,26 @@ public class InvoiceAndTicketTests
         paid.Refund();
         Assert.Equal(PurchaseStatus.Refunded, paid.Status);
     }
+
+    [Fact]
+    public void Invoice_shows_the_suppliers_own_number()
+    {
+        var invoice = new Invoice { Id = Guid.NewGuid(), SupplierNumber = "INV-20261124-BD02" };
+        Assert.Equal("INV-20261124-BD02", invoice.Number);
+    }
+
+    [Fact]
+    public void Older_invoice_without_supplier_number_falls_back_to_its_id()
+    {
+        var id = Guid.Parse("cec99860-d699-40e1-b50a-dc3d1e3afff8");
+        Assert.Equal("INV-CEC99860", new Invoice { Id = id }.Number);
+    }
+
+    [Fact]
+    public void InvoiceIssued_without_a_number_still_builds()
+    {
+        // Older publishers did not send Number; the optional parameter keeps those messages valid.
+        var m = new EventHub.Contracts.InvoiceIssued(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 10m, "USD", DateTime.UtcNow, DateTime.UtcNow.AddDays(14));
+        Assert.Null(m.Number);
+    }
 }

@@ -148,6 +148,7 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>
             e.Property(x => x.RowVersion).IsRowVersion();
             e.Ignore(x => x.IsOverdue);
             e.Ignore(x => x.Number);
+            e.Property(x => x.SupplierNumber).HasMaxLength(40);
             e.HasOne(x => x.Order).WithMany().HasForeignKey(x => x.OrderId).OnDelete(DeleteBehavior.Restrict);
             e.HasIndex(x => x.OrderId).IsUnique();
         });

@@ -55,14 +55,14 @@
     {
         <div class="table-wrap">
         <table class="table table-hover">
-            <thead><tr><th>Event</th><th>Organizer</th><th>Supplier</th><th>Received</th><th>Delivery</th><th class="num">Total</th><th>Status</th><th class="text-end">Next step</th></tr></thead>
+            <thead><tr><th>Event</th><th>Organizer</th>@if (isAdmin) { <th>Supplier</th> }<th>Received</th><th>Delivery</th><th class="num">Total</th><th>Status</th><th class="text-end">Next step</th></tr></thead>
             <tbody>
             @foreach (var o in Model)
             {
                 <tr data-href="@Url.Action("Details", new { id = o.Id })">
                     <td class="cell-title">@o.EventName</td>
                     <td>@o.Customer?.Name</td>
-                    <td><span class="cat-pill @CategoryStyle.Css(o.Supplier?.Category)">@o.Supplier?.Name</span></td>
+                    @if (isAdmin) { <td><span class="cat-pill @CategoryStyle.Css(o.Supplier?.Category)">@o.Supplier?.Name</span></td> }
                     <td class="text-muted">@o.ReceivedAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
                     <td>@o.DeliveryAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
                     <td class="num fw-semibold">@o.Total.ToString("N2")</td>
