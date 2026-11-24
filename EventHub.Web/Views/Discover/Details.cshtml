@@ -9,10 +9,13 @@
 <section class="pub-wrap pub-section">
     <a class="back-link" asp-action="Index"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>All events</a>
 
-    <div class="detail-cover @EventTypes.Css(Model.EventType)" @Html.Raw(Model.ImageUrl is null ? "" : $"style=\"background-image:url('{System.Net.WebUtility.HtmlEncode(Model.ImageUrl)}')\"")>
-        @if (Model.ImageUrl is null) { <span class="cover-icon cover-icon-xl" aria-hidden="true">@EventTypes.Icon(Model.EventType)</span> }
+    <div class="detail-cover @EventTypes.Css(Model.EventType) @(Model.ImageUrl is null ? "" : "has-image")" @Html.Raw(Model.ImageUrl is null ? "" : $"style=\"background-image:url('{System.Net.WebUtility.HtmlEncode(Model.ImageUrl)}')\"")>
+        <div class="poster-date">
+            <span class="poster-day">@Model.StartsAtUtc.ToString("dd")</span>
+            <span class="poster-month"><b>@Model.StartsAtUtc.ToString("MMMM yyyy")</b>@Model.StartsAtUtc.ToString("dddd, HH:mm") UTC</span>
+        </div>
         <div class="detail-cover-text">
-            <span class="type-pill type-pill-light">@Model.EventType</span>
+            <span class="type-pill">@Model.EventType</span>
             <h1>@Model.Name</h1>
         </div>
     </div>
@@ -20,16 +23,30 @@
     <div class="detail-grid">
         <div>
             <div class="fact-row">
-                <div class="fact"><span class="fact-icon">📅</span><div><small>Date</small><b>@Model.StartsAtUtc.ToString("ddd d MMM yyyy")</b></div></div>
-                <div class="fact"><span class="fact-icon">🕒</span><div><small>Time (UTC)</small><b>@Model.StartsAtUtc.ToString("HH:mm")</b></div></div>
-                <div class="fact"><span class="fact-icon">📍</span><div><small>Venue</small><b>@Model.Venue</b></div></div>
+                <div class="fact"><span class="fact-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg></span><div><small>Date</small><b>@Model.StartsAtUtc.ToString("ddd d MMM yyyy")</b></div></div>
+                <div class="fact"><span class="fact-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><div><small>Doors (UTC)</small><b>@Model.StartsAtUtc.ToString("HH:mm")</b></div></div>
+                <div class="fact"><span class="fact-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11a7 7 0 0114 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg></span><div><small>Venue</small><b>@Model.Venue</b></div></div>
             </div>
-            <h2 class="mt-4">About this event</h2>
+            <h2 class="detail-heading">About this event</h2>
             <p class="detail-text">@(string.IsNullOrWhiteSpace(Model.Description) ? "The organizer has not added a description yet." : Model.Description)</p>
+            <div class="detail-actions">
+                <a class="btn btn-outline-secondary" asp-action="Calendar" asp-route-id="@Model.Id"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18M12 13v5M9.5 15.5h5"/></svg>Add to calendar</a>
+            </div>
         </div>
 
         <aside class="ticket-box">
-            <h2>Get your tickets</h2>
+            <h2>Tickets</h2>
+            @{
+                var capacity = types.Sum(t => t.Quantity);
+                var sold = types.Sum(t => t.Sold);
+                var pct = capacity == 0 ? 0 : (int)Math.Round(100.0 * sold / capacity);
+            }
+            @if (capacity > 0)
+            {
+                <p class="seats-line">@((capacity - sold).ToString("N0")) of @capacity.ToString("N0") left
+                    <span class="seats-bar" role="progressbar" aria-label="Tickets sold" aria-valuenow="@pct" aria-valuemin="0" aria-valuemax="100"><span style="width:@(pct)%"></span></span>
+                </p>
+            }
             @if (!types.Any(t => t.Remaining > 0))
             {
                 <div class="sold-out-box">This event is sold out.</div>

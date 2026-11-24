@@ -1,6 +1,26 @@
-﻿@{
-    ViewData["Title"] = "Privacy Policy";
+@{
+    ViewData["Title"] = "Privacy";
+    Layout = "_PublicLayout";
 }
-<h1>@ViewData["Title"]</h1>
+<section class="pub-wrap prose-page">
+    <h1>Privacy</h1>
+    <p class="lead-text">What Event Hub keeps about you, why, and who sees it. Last updated November 2026.</p>
 
-<p>Use this page to detail your site's privacy policy.</p>
+    <h2>What we store</h2>
+    <ul>
+        <li><b>Your account:</b> name, email and a hashed password. We never see or store your password itself.</li>
+        <li><b>Tickets:</b> the event, ticket type, quantity, price and the code on each ticket.</li>
+        <li><b>Payments:</b> the amount and a reference from the payment provider. Card numbers go to the provider and are never stored by Event Hub.</li>
+        <li><b>Organizers:</b> your events and the supply orders you place.</li>
+        <li><b>Contact messages:</b> what you send through the <a asp-controller="Home" asp-action="Contact">Contact</a> page, so we can reply.</li>
+    </ul>
+
+    <h2>Who sees it</h2>
+    <p>Organizers see how many tickets were sold for their events. Suppliers receive the event name, the delivery date and what was ordered, but not who bought tickets. Event Hub administrators can see accounts and orders to keep the platform running.</p>
+
+    <h2>Cookies</h2>
+    <p>We use one cookie to keep you signed in and one that protects forms from being submitted by other sites. There are no advertising or tracking cookies.</p>
+
+    <h2>Your choices</h2>
+    <p>You can ask us to show you or delete the data linked to your account. <a asp-controller="Home" asp-action="Contact" asp-route-topic="@EventHub.Web.Models.ContactTopics.Account">Send us a message</a> and choose "My account".</p>
+</section>

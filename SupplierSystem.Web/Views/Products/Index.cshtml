@@ -21,9 +21,9 @@
 </div>
 
 <div class="stat-grid">
-    <div class="stat-card"><span class="stat-label">Active products</span><span class="stat-value">@activeCount</span><span class="stat-meta">@hidden hidden from Event Hub</span></div>
-    <div class="stat-card"><span class="stat-label">Reserved for orders</span><span class="stat-value">@reserved</span><span class="stat-meta">Units held by accepted orders</span></div>
-    <div class="stat-card @(low > 0 ? "is-warn" : "")"><span class="stat-label">Low stock</span><span class="stat-value">@low</span><span class="stat-meta">@(low > 0 ? "Restock before accepting more" : "All good")</span></div>
+    <div class="stat-card tone-teal"><span class="stat-label">Active products</span><span class="stat-value">@activeCount</span><span class="stat-meta">@hidden hidden from Event Hub</span></div>
+    <div class="stat-card tone-blue"><span class="stat-label">Reserved for orders</span><span class="stat-value">@reserved</span><span class="stat-meta">Units held by accepted orders</span></div>
+    <div class="stat-card @(low > 0 ? "tone-orange" : "tone-green")"><span class="stat-label">Low stock</span><span class="stat-value">@low</span><span class="stat-meta">@(low > 0 ? "Restock before accepting more" : "All good")</span></div>
 </div>
 
 <section class="panel">
@@ -45,7 +45,7 @@
                 var pct = onHand > 0 ? Math.Clamp(available * 100 / onHand, 0, 100) : 0;
                 var isLow = p.Inventory?.IsLow == true;
                 <tr>
-                    <td><div class="with-tile"><span class="tile">@(p.Name.Length > 0 ? p.Name[..1] : "?")</span><span class="cell-title">@p.Name</span></div></td>
+                    <td><div class="with-tile"><span class="tile @CategoryStyle.Css(p.Supplier?.Category ?? User.FindFirst(SupplierSystem.Web.Services.StaffClaimsFactory.SupplierCategoryClaim)?.Value)">@(p.Name.Length > 0 ? p.Name[..1] : "?")</span><span class="cell-title">@p.Name</span></div></td>
                     <td class="text-muted">@p.Unit</td>
                     <td class="num">@p.Price.ToString("N2")</td>
                     <td class="num">@onHand</td>

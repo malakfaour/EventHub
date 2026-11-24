@@ -8,6 +8,8 @@ using EventHub.Messaging;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -74,7 +76,23 @@ builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<ICatalogService, CatalogService>();
 builder.Services.AddScoped<ITicketService, TicketService>();
+builder.Services.AddScoped<IContactRepository, ContactRepository>();
+builder.Services.AddScoped<IContactService, ContactService>();
 builder.Services.AddSingleton<IPaymentGateway, FakePaymentGateway>();
+
+// Abuse limit: the public contact form accepts 5 messages a minute per IP address.
+builder.Services.AddRateLimiter(o =>
+{
+    o.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    o.AddPolicy("contact", ctx => RateLimitPartition.GetFixedWindowLimiter(
+        ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 5, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
+});
+
+// Health checks: GET /health reports the database and the RabbitMQ connection.
+builder.Services.AddHealthChecks()
+    .AddCheck<EventHub.Web.Services.DatabaseHealthCheck>("database")
+    .AddCheck<EventHub.Messaging.RabbitMqHealthCheck>("rabbitmq");
 builder.Services.Configure<EventHub.Web.Services.Ai.AiOptions>(builder.Configuration.GetSection("Ai"));
 builder.Services.AddHttpClient<EventHub.Web.Services.Ai.IEventAdvisor, EventHub.Web.Services.Ai.EventAdvisor>(c => c.Timeout = TimeSpan.FromSeconds(60));   // the advisor enforces its own, shorter overall limit
 
@@ -89,12 +107,15 @@ if (!app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 }
 
+app.UseStatusCodePagesWithReExecute("/status/{0}");
 app.UseRouting();
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapStaticAssets();
 app.MapHub<EventHub.Web.Hubs.LiveHub>("/hubs/live");
+app.MapHealthChecks("/health", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions { ResponseWriter = EventHub.Messaging.HealthReportWriter.WriteAsync });
 app.MapControllerRoute(
         name: "default",
         pattern: "{controller=Home}/{action=Index}/{id?}")

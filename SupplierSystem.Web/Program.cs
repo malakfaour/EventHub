@@ -83,6 +83,11 @@ builder.Services.AddConsumer<PaymentsConsumer>();
 builder.Services.AddScoped<ICatalogService, CatalogService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 
+// Health checks: GET /health reports the database and the RabbitMQ connection.
+builder.Services.AddHealthChecks()
+    .AddCheck<SupplierSystem.Web.Services.DatabaseHealthCheck>("database")
+    .AddCheck<RabbitMqHealthCheck>("rabbitmq");
+
 var app = builder.Build();
 
 await DbSeeder.MigrateAndSeedAsync(app.Services);
@@ -94,12 +99,14 @@ if (!app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 }
 
+app.UseStatusCodePagesWithReExecute("/status/{0}");
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapStaticAssets();
 app.MapHub<SupplierSystem.Web.Hubs.LiveHub>("/hubs/live");
+app.MapHealthChecks("/health", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions { ResponseWriter = HealthReportWriter.WriteAsync });
 app.MapControllerRoute(
         name: "default",
         pattern: "{controller=Orders}/{action=Index}/{id?}")

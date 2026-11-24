@@ -1,45 +1,130 @@
-@model List<EventHub.Web.Models.Event>
+@model EventHub.Web.ViewModels.DiscoverViewModel
 @{
     ViewData["Title"] = "Discover events";
-    var search = ViewBag.Search as string;
-    var type = ViewBag.Type as string;
+    var q = Model.Query;
+    var next = Model.Events.FirstOrDefault();
+    // The pinned poster is always the soonest event on sale, whatever the filters say.
+    var pinned = q.HasFilters || q.Sort is not (null or "" or "date") ? null : next;
+    string? Label(string? value, string? when) => value switch
+    {
+        "today" => "Today", "week" => "Next 7 days", "month" => "Next 30 days",
+        "free" => "Free", "paid" => "Paid", _ => when
+    };
+    var soonest = Model.Stats.UpcomingEvents > 0 && next is not null ? (next.StartsAtUtc.Date - DateTime.UtcNow.Date).Days : -1;
 }
+
 <section class="pub-hero">
     <div class="pub-wrap">
-        <span class="hero-kicker">Live events near you</span>
-        <h1>Find your next<br /><span class="hero-accent">unforgettable</span> night.</h1>
-        <p>Concerts, conferences, weddings and parties. Pick your event, grab your tickets in seconds.</p>
-        <form method="get" class="hero-search" asp-action="Index">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
-            <input name="search" value="@search" placeholder="Search by event or venue" aria-label="Search events" />
-            @if (!string.IsNullOrEmpty(type)) { <input type="hidden" name="type" value="@type" /> }
-            <button class="btn btn-primary">Search</button>
-        </form>
+        <div>
+            <h1>What's on in the city.</h1>
+            <p class="lead-text">Concerts, talks, parties and weddings from local organizers. Pick a night, choose your tickets and keep your pass on your phone.</p>
+            <form method="get" class="hero-search" asp-action="Index" role="search">
+                <div class="hs-field">
+                    <label for="q-search">Looking for</label>
+                    <input id="q-search" name="search" value="@q.Search" placeholder="Event or venue" maxlength="100" />
+                </div>
+                <div class="hs-field">
+                    <label for="q-when">When</label>
+                    <select id="q-when" name="when">
+                        <option value="" selected="@(string.IsNullOrEmpty(q.When))">Any date</option>
+                        <option value="today" selected="@(q.When == "today")">Today</option>
+                        <option value="week" selected="@(q.When == "week")">Next 7 days</option>
+                        <option value="month" selected="@(q.When == "month")">Next 30 days</option>
+                    </select>
+                </div>
+                <div class="hs-field">
+                    <label for="q-price">Price</label>
+                    <select id="q-price" name="price">
+                        <option value="" selected="@(string.IsNullOrEmpty(q.Price))">Any price</option>
+                        <option value="free" selected="@(q.Price == "free")">Free</option>
+                        <option value="paid" selected="@(q.Price == "paid")">Paid</option>
+                    </select>
+                </div>
+                @if (!string.IsNullOrEmpty(q.Type)) { <input type="hidden" name="type" value="@q.Type" /> }
+                @if (!string.IsNullOrEmpty(q.Sort)) { <input type="hidden" name="sort" value="@q.Sort" /> }
+                <button class="btn btn-primary">Search</button>
+            </form>
+            <p class="hero-note">
+                @if (Model.Stats.UpcomingEvents == 0)
+                {
+                    <text>No events are on sale right now. Check back soon.</text>
+                }
+                else
+                {
+                    <text>@Model.Stats.UpcomingEvents event@(Model.Stats.UpcomingEvents == 1 ? "" : "s") on sale@(Model.Stats.TicketsSold > 0 ? $", {Model.Stats.TicketsSold:N0} tickets sold so far" : "").</text>
+                    @if (pinned is not null && soonest >= 0)
+                    {
+                        <text> The next one is @(soonest == 0 ? "today" : soonest == 1 ? "tomorrow" : $"in {soonest} days").</text>
+                    }
+                }
+            </p>
+        </div>
+        @if (pinned is not null)
+        {
+            <div class="pinned">
+                <span class="pinned-label">Next up</span>
+                <partial name="_EventCard" model="pinned" />
+            </div>
+        }
     </div>
 </section>
 
-<section class="pub-wrap pub-section">
-    <div class="type-chips">
-        <a class="chip @(string.IsNullOrEmpty(type) ? "active" : "")" asp-action="Index" asp-route-search="@search">All</a>
+<nav class="type-bar" aria-label="Event types">
+    <div class="pub-wrap type-chips">
+        <a class="chip @(string.IsNullOrEmpty(q.Type) ? "active" : "")" asp-action="Index" asp-route-search="@q.Search" asp-route-when="@q.When" asp-route-price="@q.Price" asp-route-sort="@q.Sort">All</a>
         @foreach (var t in EventTypes.All)
         {
-            <a class="chip @(type == t ? "active" : "")" asp-action="Index" asp-route-type="@t" asp-route-search="@search"><span aria-hidden="true">@EventTypes.Icon(t)</span> @t</a>
+            <a class="chip @EventTypes.Css(t) @(q.Type == t ? "active" : "")" asp-action="Index" asp-route-type="@t" asp-route-search="@q.Search" asp-route-when="@q.When" asp-route-price="@q.Price" asp-route-sort="@q.Sort"><span class="chip-ink" aria-hidden="true"></span>@t</a>
         }
     </div>
+</nav>
 
-    <div class="section-head mb-3">
-        <h2>@(string.IsNullOrEmpty(type) ? "Upcoming events" : type)</h2>
-        <span class="text-muted small">@Model.Count event@(Model.Count == 1 ? "" : "s")</span>
+<section class="pub-wrap pub-section pt-0">
+    <div class="results-head">
+        <div>
+            <h2>@(string.IsNullOrEmpty(q.Type) ? "Upcoming events" : q.Type)</h2>
+            <p>@Model.Events.Count event@(Model.Events.Count == 1 ? "" : "s")@(q.HasFilters ? " match your search" : "")</p>
+        </div>
+        <form method="get" class="sort-form" asp-action="Index">
+            <input type="hidden" name="search" value="@q.Search" />
+            <input type="hidden" name="type" value="@q.Type" />
+            <input type="hidden" name="when" value="@q.When" />
+            <input type="hidden" name="price" value="@q.Price" />
+            <label for="q-sort">Sort by</label>
+            <select id="q-sort" name="sort" onchange="this.form.submit()">
+                <option value="date" selected="@(q.Sort is null or "" or "date")">Soonest first</option>
+                <option value="popular" selected="@(q.Sort == "popular")">Most popular</option>
+                <option value="price" selected="@(q.Sort == "price")">Lowest price</option>
+            </select>
+            <noscript><button class="btn btn-sm btn-outline-secondary">Sort</button></noscript>
+        </form>
     </div>
 
-    @if (!Model.Any())
+    @if (q.HasFilters)
     {
-        <div class="panel"><div class="empty-state"><strong>No events found</strong>Try another search or a different category.</div></div>
+        <div class="active-filters">
+            @if (!string.IsNullOrWhiteSpace(q.Search)) { <a class="filter-tag" asp-action="Index" asp-route-type="@q.Type" asp-route-when="@q.When" asp-route-price="@q.Price" asp-route-sort="@q.Sort" aria-label="Remove search">"@q.Search" <span aria-hidden="true">&times;</span></a> }
+            @if (!string.IsNullOrWhiteSpace(q.When)) { <a class="filter-tag" asp-action="Index" asp-route-search="@q.Search" asp-route-type="@q.Type" asp-route-price="@q.Price" asp-route-sort="@q.Sort" aria-label="Remove date filter">@Label(q.When, q.When) <span aria-hidden="true">&times;</span></a> }
+            @if (!string.IsNullOrWhiteSpace(q.Price)) { <a class="filter-tag" asp-action="Index" asp-route-search="@q.Search" asp-route-type="@q.Type" asp-route-when="@q.When" asp-route-sort="@q.Sort" aria-label="Remove price filter">@Label(q.Price, q.Price) <span aria-hidden="true">&times;</span></a> }
+            <a asp-action="Index">Clear all</a>
+        </div>
     }
-    <div class="event-grid">
-        @foreach (var ev in Model)
-        {
-            <partial name="_EventCard" model="ev" />
-        }
-    </div>
+
+    @if (!Model.Events.Any())
+    {
+        <div class="empty-wall">
+            <h3>Nothing on the wall for that.</h3>
+            <p>No upcoming events match these filters. Try another date or event type.</p>
+            <a class="btn btn-outline-secondary" asp-action="Index">Show all events</a>
+        </div>
+    }
+    else
+    {
+        <div class="event-grid">
+            @foreach (var ev in Model.Events)
+            {
+                <partial name="_EventCard" model="ev" />
+            }
+        </div>
+    }
 </section>

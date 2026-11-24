@@ -23,7 +23,12 @@ public class EventsController : Controller
 
     private Guid OrganizerId => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-    public async Task<IActionResult> Index(CancellationToken ct) => View(await _events.ListAsync(OrganizerId, ct));
+    /// <summary>My events. <paramref name="show"/> filters the table: upcoming, drafts or past (empty = all). The stat cards always count every event.</summary>
+    public async Task<IActionResult> Index(string? show, CancellationToken ct)
+    {
+        ViewBag.Show = show is "upcoming" or "drafts" or "past" ? show : null;
+        return View(await _events.ListAsync(OrganizerId, ct));
+    }
 
     public IActionResult Create() => View("Form", new EventFormViewModel());
 

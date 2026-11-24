@@ -1,0 +1,9 @@
+@* Applies the saved light/dark choice before the page paints, so there is no flash. ui.js handles the toggle. *@
+<script>
+    (function () {
+        var t = 'light';
+        try { t = localStorage.getItem('ui.theme') === 'dark' ? 'dark' : 'light'; } catch (e) { }
+        document.documentElement.setAttribute('data-theme', t);
+        document.documentElement.setAttribute('data-bs-theme', t);
+    })();
+</script>

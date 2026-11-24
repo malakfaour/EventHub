@@ -12,9 +12,10 @@
 }
 @inject Microsoft.AspNetCore.Authorization.IAuthorizationService AuthorizationService
 <a class="back-link" asp-action="Index"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>Orders</a>
+<div class="cat-band @CategoryStyle.Css(Model.Supplier?.Category)" aria-hidden="true"></div>
 <div class="page-header">
     <div>
-        <div class="crumbs">Order for <b>@Model.Supplier?.Name</b></div>
+        <p class="page-sub mt-0 mb-1"><span class="cat-pill @CategoryStyle.Css(Model.Supplier?.Category)">@Model.Supplier?.Name, @SupplyCategories.DisplayName(Model.Supplier?.Category ?? "")</span></p>
         <h1 class="page-title">@Model.EventName <partial name="_StatusBadge" model="Model.Status" /></h1>
     </div>
 </div>

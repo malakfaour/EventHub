@@ -1,3 +1,4 @@
+@inject EventHub.Web.Services.IContactService ContactService
 @{
     var signedIn = User.Identity?.IsAuthenticated == true;
     var controller = ViewContext.RouteData.Values["controller"]?.ToString();
@@ -5,6 +6,7 @@
     string Active(bool on) => on ? "side-link active" : "side-link";
     var userName = User.Identity?.Name ?? "";
     var isAdmin = User.IsInRole("Admin");
+    var openMessages = isAdmin ? await ContactService.CountOpenAsync() : 0;
     var initials = userName.Length >= 2 ? userName[..2] : userName;
 }
 <!DOCTYPE html>
@@ -15,32 +17,35 @@
     <title>@ViewData["Title"] - Event Hub</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,900&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/theme.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <partial name="_ThemeBoot" />
 </head>
 <body class="theme-eventhub" data-controller="@controller?.ToLowerInvariant()" data-action="@action?.ToLowerInvariant()">
 @if (signedIn)
 {
     <div class="app">
         <aside class="sidebar">
-            <a class="brand" asp-controller="Home" asp-action="Index">
+            <div class="d-flex align-items-center"><a class="brand" asp-controller="Home" asp-action="Index">
                 <span class="brand-mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/><path d="M12 13.5l1 2 2 .3-1.5 1.4.4 2-1.9-1-1.9 1 .4-2-1.5-1.4 2-.3z"/></svg></span>
                 <span><span class="brand-name">Event Hub</span><span class="brand-sub">@(isAdmin ? "Administration" : "Organizer workspace")</span></span>
             </a>
+            <button type="button" class="icon-btn sidebar-close" data-nav-close aria-label="Close menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>
             @if (isAdmin)
             {
             <nav class="side-nav" aria-label="Admin">
                 <span class="nav-section">Insight</span>
                 <a class="@Active(controller == "Admin" && action == "Index")" asp-controller="Admin" asp-action="Index"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Overview</a>
                 <span class="nav-section">Oversight</span>
-                <a class="@Active(controller == "Admin" && action == "Users")" asp-controller="Admin" asp-action="Users"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Users</a>
-                <a class="@Active(controller == "Admin" && action == "Events")" asp-controller="Admin" asp-action="Events"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Events</a>
-                <a class="@Active(controller == "Admin" && action == "Orders")" asp-controller="Admin" asp-action="Orders"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Supply orders</a>
-                <a class="@Active(controller == "Admin" && action == "Tickets")" asp-controller="Admin" asp-action="Tickets"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Ticket sales</a>
+                <a class="@Active(controller == "Admin" && action == "Users")" asp-controller="Admin" asp-action="Users"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="4"/><path d="M2 21v-1a6 6 0 016-6h2a6 6 0 016 6v1"/><path d="M16 4a4 4 0 010 8M22 21v-1a6 6 0 00-4-5.6"/></svg>Users</a>
+                <a class="@Active(controller == "Admin" && action == "Events")" asp-controller="Admin" asp-action="Events"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>Events</a>
+                <a class="@Active(controller == "Admin" && action == "Orders")" asp-controller="Admin" asp-action="Orders"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6h15l-2 9H8z"/><path d="M6 6L5 3H2"/><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/></svg>Supply orders</a>
+                <a class="@Active(controller == "Admin" && action == "Tickets")" asp-controller="Admin" asp-action="Tickets"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8a2 2 0 002-2h14a2 2 0 002 2v2a2 2 0 000 4v2a2 2 0 00-2 2H5a2 2 0 00-2-2v-2a2 2 0 000-4z"/><path d="M13 6v12" stroke-dasharray="2 2"/></svg>Ticket sales</a>
+                <a class="@Active(controller == "Admin" && action == "Inbox")" asp-controller="Admin" asp-action="Inbox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13l3-8h12l3 8v6H3z"/><path d="M3 13h5l1 2h6l1-2h5"/></svg><span>Inbox</span>@if (openMessages > 0) { <span class="side-count" title="Open messages">@openMessages</span> }</a>
                 <span class="nav-section">System</span>
-                <a class="@Active(controller == "Admin" && action == "Messages")" asp-controller="Admin" asp-action="Messages"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Message monitor</a>
+                <a class="@Active(controller == "Admin" && action == "Messages")" asp-controller="Admin" asp-action="Messages"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v12H8l-4 4z"/><path d="M8 9h8M8 12h5"/></svg>Message monitor</a>
                 </nav>
             }
             else
@@ -56,6 +61,9 @@
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6h15l-2 9H8z"/><path d="M6 6L5 3H2"/><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/></svg>Supply orders</a>
                 <a class="@Active(controller == "Invoices")" asp-controller="Invoices" asp-action="Index">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg>Invoices</a>
+                <span class="nav-section">Public</span>
+                <a class="side-link is-external" asp-controller="Discover" asp-action="Index">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 010 18M12 3a14 14 0 000 18"/></svg>Public site</a>
             </nav>
             }
             <div class="user-card">
@@ -66,10 +74,23 @@
                 </form>
             </div>
         </aside>
-        <main class="main" role="main">
-            <partial name="_Alerts" />
-            @RenderBody()
-        </main>
+        <div class="nav-backdrop" data-nav-close aria-hidden="true"></div>
+        <div class="main-col">
+            <header class="topbar">
+                <button type="button" class="tb-btn tb-menu" data-nav-open aria-expanded="false" aria-label="Open menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+                <div class="topbar-title">@(isAdmin ? "Administration" : "Workspace") / <strong>@ViewData["Title"]</strong></div>
+                <span class="topbar-spacer"></span>
+                <partial name="_ThemeToggle" />
+                @if (!isAdmin)
+                {
+                    <a class="btn btn-primary" asp-controller="Events" asp-action="Create" aria-label="New event"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span class="btn-label">New event</span></a>
+                }
+            </header>
+            <main class="main" role="main" id="main">
+                <partial name="_Alerts" />
+                @RenderBody()
+            </main>
+        </div>
     </div>
 }
 else
@@ -97,6 +118,7 @@ else
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/ui.js" asp-append-version="true"></script>
     @if (signedIn)
     {
         <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>

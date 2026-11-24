@@ -1,0 +1,16 @@
+@model int
+@{
+    var (title, text) = Model switch
+    {
+        404 => ("This page isn't here.", "The order or product may have been removed, or the link is old."),
+        403 => ("You can't open this page.", "Your role doesn't include it. Ask your supplier manager if you need access."),
+        _ => ("Something went wrong.", "Try again in a moment.")
+    };
+    ViewData["Title"] = title.TrimEnd('.');
+}
+<section class="status-page is-workspace">
+    <span class="status-code">@Model</span>
+    <h1>@title</h1>
+    <p>@text</p>
+    <a class="btn btn-primary" asp-controller="Orders" asp-action="Index">Back to orders</a>
+</section>

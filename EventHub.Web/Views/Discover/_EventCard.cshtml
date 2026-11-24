@@ -1,24 +1,37 @@
 @model EventHub.Web.Models.Event
 @{
+    // A gig poster: the event type's ink, the date set big, and the price on a sticker.
     var available = Model.TicketTypes.Where(t => t.Remaining > 0).ToList();
     var soldOut = !available.Any();
     var from = available.Any() ? available.Min(t => t.Price) : 0m;
     var left = available.Sum(t => t.Remaining);
+    var hasImage = Model.ImageUrl is not null;
+    var price = from == 0 ? "Free" : "$" + from.ToString("0.##");
+    var cover = hasImage ? $"background-image:url('{System.Net.WebUtility.HtmlEncode(Model.ImageUrl)}')" : null;
 }
-<a class="event-card" asp-controller="Discover" asp-action="Details" asp-route-id="@Model.Id">
-    <div class="event-cover @EventTypes.Css(Model.EventType)" @Html.Raw(Model.ImageUrl is null ? "" : $"style=\"background-image:url('{System.Net.WebUtility.HtmlEncode(Model.ImageUrl)}')\"")>
-        @if (Model.ImageUrl is null) { <span class="cover-icon" aria-hidden="true">@EventTypes.Icon(Model.EventType)</span> }
-        <span class="date-chip"><small>@Model.StartsAtUtc.ToString("MMM")</small><b>@Model.StartsAtUtc.ToString("dd")</b></span>
-        @if (soldOut) { <span class="cover-flag is-sold">Sold out</span> }
-        else if (left <= 20) { <span class="cover-flag is-few">Only @left left</span> }
-    </div>
-    <div class="event-body">
-        <span class="type-pill">@Model.EventType</span>
-        <h3>@Model.Name</h3>
-        <p class="event-meta">@Model.StartsAtUtc.ToString("ddd d MMM · HH:mm") &middot; @Model.Venue</p>
-        <div class="event-foot">
-            <span class="event-price">@(soldOut ? "—" : from == 0 ? "Free" : "From $" + from.ToString("0.##"))</span>
-            <span class="event-go">Get tickets &rarr;</span>
+<a class="event-card @EventTypes.Css(Model.EventType)" asp-controller="Discover" asp-action="Details" asp-route-id="@Model.Id">
+    <div class="poster @(hasImage ? "has-image" : "")" style="@cover">
+        <div class="poster-date">
+            <span class="poster-day">@Model.StartsAtUtc.ToString("dd")</span>
+            <span class="poster-month"><b>@Model.StartsAtUtc.ToString("MMMM")</b>@Model.StartsAtUtc.ToString("dddd, HH:mm")</span>
         </div>
+        @if (soldOut)
+        {
+            <span class="sticker is-sold">Sold out</span>
+        }
+        else
+        {
+            <span class="sticker @(price.Length > 4 ? "is-small" : "")">@if (available.Count > 1 && from > 0) { <small>from</small> }@price</span>
+        }
+        <div>
+            <h3 class="poster-title">@Model.Name</h3>
+            <span class="poster-venue">@Model.Venue</span>
+        </div>
+    </div>
+    <div class="card-meta">
+        <b>@Model.EventType</b>
+        @if (soldOut) { <span>Sold out</span> }
+        else if (left <= 20) { <span class="is-few">Only @left left</span> }
+        else { <span>@left tickets left</span> }
     </div>
 </a>

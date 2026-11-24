@@ -1,0 +1,64 @@
+@model List<EventHub.Web.Models.ContactMessage>
+@{
+    ViewData["Title"] = "Inbox";
+    var show = ViewBag.Show as string ?? "open";
+    var openCount = (int)(ViewBag.OpenCount ?? 0);
+    string Tab(string key) => show == key ? "active" : "";
+}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Inbox</h1>
+        <p class="page-sub">Messages sent from the public Contact page. Reply by email, then mark them handled.</p>
+    </div>
+</div>
+
+<section class="panel">
+    <div class="panel-head">
+        <nav class="tabs" aria-label="Filter messages">
+            <a class="@Tab("open")" asp-action="Inbox">Open<span>@openCount</span></a>
+            <a class="@Tab("handled")" asp-action="Inbox" asp-route-show="handled">Handled</a>
+            <a class="@Tab("all")" asp-action="Inbox" asp-route-show="all">All</a>
+        </nav>
+    </div>
+    @if (!Model.Any())
+    {
+        <div class="empty-state">
+            <strong>@(show == "open" ? "Nothing waiting" : "No messages here")</strong>
+            <span>@(show == "open" ? "New messages from the Contact page show up here." : "Try another tab.")</span>
+        </div>
+    }
+    else
+    {
+        <ul class="inbox">
+            @foreach (var m in Model)
+            {
+                var subject = Uri.EscapeDataString($"Re: {m.Topic}");
+                <li class="inbox-item @(m.IsOpen ? "is-open" : "")">
+                    <div class="inbox-head">
+                        <div>
+                            <span class="cell-title">@m.Name</span>
+                            <a class="cell-sub" href="mailto:@m.Email?subject=@subject">@m.Email</a>
+                        </div>
+                        <div class="inbox-meta">
+                            <span class="status status-@(m.IsOpen ? "amber" : "green")">@(m.IsOpen ? "Open" : "Handled")</span>
+                            <span class="status status-gray">@m.Topic</span>
+                            @if (m.UserId is not null) { <span class="status status-sky">Signed in</span> }
+                            <time datetime="@m.CreatedAtUtc.ToString("o")" class="text-muted">@m.CreatedAtUtc.ToString("d MMM yyyy, HH:mm") UTC</time>
+                        </div>
+                    </div>
+                    <p class="inbox-body">@m.Message</p>
+                    <div class="inbox-actions">
+                        <a class="btn btn-sm btn-outline-secondary" href="mailto:@m.Email?subject=@subject">Reply by email</a>
+                        <form method="post" asp-action="SetHandled" class="m-0">
+                            <input type="hidden" name="id" value="@m.Id" />
+                            <input type="hidden" name="handled" value="@(m.IsOpen ? "true" : "false")" />
+                            <input type="hidden" name="show" value="@show" />
+                            <button class="btn btn-sm @(m.IsOpen ? "btn-primary" : "btn-outline-secondary")">@(m.IsOpen ? "Mark handled" : "Reopen")</button>
+                        </form>
+                        @if (!m.IsOpen) { <span class="text-muted small">Handled by @m.HandledBy, @m.HandledAtUtc?.ToString("d MMM HH:mm")</span> }
+                    </div>
+                </li>
+            }
+        </ul>
+    }
+</section>

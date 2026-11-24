@@ -35,7 +35,7 @@
             var ev = p.Event!;
             var past = ev.StartsAtUtc < now.Date;
             <a class="purchase-card @(past || p.Status != PurchaseStatus.Paid ? "is-past" : "")" asp-action="Details" asp-route-id="@p.Id">
-                <span class="purchase-cover @EventTypes.Css(ev.EventType)"><span class="cover-icon" aria-hidden="true">@EventTypes.Icon(ev.EventType)</span></span>
+                <span class="purchase-cover @EventTypes.Css(ev.EventType)" aria-hidden="true"><span class="poster-day">@ev.StartsAtUtc.ToString("dd")</span></span>
                 <span class="purchase-main">
                     <b>@ev.Name</b>
                     <small>@ev.StartsAtUtc.ToString("ddd d MMM yyyy · HH:mm") UTC &middot; @ev.Venue</small>

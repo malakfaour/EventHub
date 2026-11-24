@@ -27,9 +27,9 @@
 </div>
 
 <div class="stat-grid">
-    <div class="stat-card is-accent"><span class="stat-label">Waiting for you</span><span class="stat-value">@waiting</span><span class="stat-meta">Received, not yet accepted</span></div>
-    <div class="stat-card"><span class="stat-label">In progress</span><span class="stat-value">@inProgress</span><span class="stat-meta">Accepted, preparing or dispatched</span></div>
-    <div class="stat-card"><span class="stat-label">Due this week</span><span class="stat-value">@dueSoon.Count</span><span class="stat-meta">@(dueSoon.Any() ? $"Next delivery {dueSoon[0].DeliveryAtUtc:ddd HH:mm}" : "Nothing due")</span></div>
+    <div class="stat-card tone-yellow"><span class="stat-label">Waiting for you</span><span class="stat-value">@waiting</span><span class="stat-meta">Received, not yet accepted</span></div>
+    <div class="stat-card tone-blue"><span class="stat-label">In progress</span><span class="stat-value">@inProgress</span><span class="stat-meta">Accepted, preparing or dispatched</span></div>
+    <div class="stat-card tone-pink"><span class="stat-label">Due this week</span><span class="stat-value">@dueSoon.Count</span><span class="stat-meta">@(dueSoon.Any() ? $"Next delivery {dueSoon[0].DeliveryAtUtc:ddd HH:mm}" : "Nothing due")</span></div>
 </div>
 
 <section class="panel">
@@ -38,7 +38,7 @@
             <a class="filter-pill @(current is null ? "active" : "")" asp-action="Index">All</a>
             @foreach (var s in filters)
             {
-                <a class="filter-pill @(current == s ? "active" : "")" asp-action="Index" asp-route-status="@s">@s</a>
+                <a class="filter-pill @(current == s ? "active" : "")" asp-action="Index" asp-route-status="@s"><span class="dot tone-@CategoryStyle.Tone(s)" aria-hidden="true"></span>@s</a>
             }
         </nav>
     </div>
@@ -57,7 +57,7 @@
                 <tr data-href="@Url.Action("Details", new { id = o.Id })">
                     <td class="cell-title">@o.EventName</td>
                     <td>@o.Customer?.Name</td>
-                    <td>@o.Supplier?.Name</td>
+                    <td><span class="cat-pill @CategoryStyle.Css(o.Supplier?.Category)">@o.Supplier?.Name</span></td>
                     <td class="text-muted">@o.ReceivedAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
                     <td>@o.DeliveryAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
                     <td class="num fw-semibold">@o.Total.ToString("N2")</td>

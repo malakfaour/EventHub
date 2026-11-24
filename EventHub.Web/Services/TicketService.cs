@@ -22,8 +22,11 @@ public sealed class TicketService : ITicketService
         _logger = logger;
     }
 
-    public Task<List<Event>> ListPublicAsync(string? search, string? type, CancellationToken ct = default) =>
-        _events.ListPublishedAsync(search, type, ct);
+    public Task<List<Event>> ListPublicAsync(DiscoverQuery query, CancellationToken ct = default) =>
+        _events.ListPublishedAsync(query, ct);
+
+    public Task<PublicStats> GetPublicStatsAsync(CancellationToken ct = default) =>
+        _events.GetPublicStatsAsync(ct);
 
     public Task<Event?> GetPublicAsync(Guid eventId, CancellationToken ct = default) =>
         _events.GetPublicAsync(eventId, ct);

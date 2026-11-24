@@ -15,8 +15,8 @@
         @foreach (var s in Model)
         {
             <tr>
-                <td><div class="with-tile"><span class="tile">@(s.Name.Length > 0 ? s.Name[..1] : "?")</span><span class="cell-title">@s.Name</span></div></td>
-                <td>@SupplyCategories.DisplayName(s.Category)</td>
+                <td><div class="with-tile"><span class="tile @CategoryStyle.Css(s.Category)">@(s.Name.Length > 0 ? s.Name[..1] : "?")</span><span class="cell-title">@s.Name</span></div></td>
+                <td><span class="cat-pill @CategoryStyle.Css(s.Category)">@SupplyCategories.DisplayName(s.Category)</span></td>
                 <td class="text-muted">@s.ContactEmail</td>
                 <td>@if (s.IsActive) { <span class="status status-green">Active</span> } else { <span class="status status-gray">Inactive</span> }</td>
             </tr>
